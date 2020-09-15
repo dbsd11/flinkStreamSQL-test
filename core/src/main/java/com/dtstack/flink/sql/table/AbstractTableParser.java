@@ -17,7 +17,6 @@
  */
 
 
-
 package com.dtstack.flink.sql.table;
 
 import com.dtstack.flink.sql.util.ClassUtil;
@@ -36,6 +35,7 @@ import java.util.regex.Pattern;
  * Reason:
  * Date: 2018/7/4
  * Company: www.dtstack.com
+ *
  * @author xuchao
  */
 
@@ -65,14 +65,14 @@ public abstract class AbstractTableParser {
 
     public abstract AbstractTableInfo getTableInfo(String tableName, String fieldsInfo, Map<String, Object> props) throws Exception;
 
-    public boolean dealKeyPattern(String fieldRow, AbstractTableInfo tableInfo){
-        for(Map.Entry<String, Pattern> keyPattern : patternMap.entrySet()){
+    public boolean dealKeyPattern(String fieldRow, AbstractTableInfo tableInfo) {
+        for (Map.Entry<String, Pattern> keyPattern : patternMap.entrySet()) {
             Pattern pattern = keyPattern.getValue();
             String key = keyPattern.getKey();
             Matcher matcher = pattern.matcher(fieldRow);
-            if(matcher.find()){
+            if (matcher.find()) {
                 ITableFieldDealHandler handler = handlerMap.get(key);
-                if(handler == null){
+                if (handler == null) {
                     throw new RuntimeException("parse field [" + fieldRow + "] error.");
                 }
 
@@ -89,6 +89,7 @@ public abstract class AbstractTableParser {
         List<String> fieldRows = DtStringUtil.splitField(fieldsInfo);
 
         for (String fieldRow : fieldRows) {
+            fieldRow = fieldRow.contains("//") ? fieldRow.substring(0, fieldRow.lastIndexOf("//")) : fieldRow;
             fieldRow = fieldRow.trim();
 
             if (StringUtils.isBlank(fieldRow)) {
@@ -109,7 +110,7 @@ public abstract class AbstractTableParser {
             String[] filedNameArr = new String[fieldInfoArr.length - 1];
             System.arraycopy(fieldInfoArr, 0, filedNameArr, 0, fieldInfoArr.length - 1);
             String fieldName = String.join(" ", filedNameArr);
-            String fieldType = fieldInfoArr[fieldInfoArr.length - 1 ].trim();
+            String fieldType = fieldInfoArr[fieldInfoArr.length - 1].trim();
 
             Class fieldClass = null;
             AbstractTableInfo.FieldExtraInfo fieldExtraInfo = null;
@@ -142,6 +143,7 @@ public abstract class AbstractTableParser {
 
     /**
      * add parser for alias field
+     *
      * @param matcher
      * @param tableInfo
      */
