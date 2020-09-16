@@ -1,9 +1,9 @@
 package com.dtstack.flink.sql.util;
 
-import org.apache.flink.table.dataformat.BaseRow;
-import org.apache.flink.table.dataformat.BinaryString;
-import org.apache.flink.table.dataformat.GenericRow;
-import org.apache.flink.table.dataformat.SqlTimestamp;
+import org.apache.flink.table.data.GenericRowData;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.data.StringData;
+import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.types.Row;
 
 import java.sql.Timestamp;
@@ -17,14 +17,14 @@ import java.sql.Timestamp;
  */
 public class RowDataConvert {
 
-    public static BaseRow convertToBaseRow(Row row){
+    public static RowData convertToBaseRow(Row row){
         int length = row.getArity();
-        GenericRow genericRow = new GenericRow(length);
+        GenericRowData genericRow = new GenericRowData(length);
         for(int i=0; i<length; i++){
             if(row.getField(i) instanceof String){
-                genericRow.setField(i, BinaryString.fromString((String)row.getField(i)));
+                genericRow.setField(i, StringData.fromString((String)row.getField(i)));
             } else if(row.getField(i) instanceof Timestamp){
-                SqlTimestamp newTimestamp = SqlTimestamp.fromTimestamp(((Timestamp)row.getField(i)));
+                TimestampData newTimestamp = TimestampData.fromTimestamp(((Timestamp)row.getField(i)));
                 genericRow.setField(i, newTimestamp);
             }else{
                 genericRow.setField(i, row.getField(i));

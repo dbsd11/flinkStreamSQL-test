@@ -23,10 +23,11 @@ import org.apache.calcite.sql.SqlInsert;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
+import org.apache.flink.table.api.internal.SelectTableSink;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.api.internal.TableImpl;
-import org.apache.flink.table.api.java.StreamTableEnvironment;
-import org.apache.flink.table.api.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.operations.Operation;
@@ -63,9 +64,12 @@ public class FlinkSQLExec {
         TableImpl queryResult = extractQueryTableFromInsertCaluse(tableEnvImpl, flinkPlanner, insert);
 
         String targetTableName = ((SqlIdentifier) ((SqlInsert) insert).getTargetTable()).names.get(0);
-        TableSink tableSink = getTableSinkByPlanner(streamPlanner, targetTableName);
+        //todo fix
 
-        String[] sinkFieldNames = tableSink.getTableSchema().getFieldNames();
+        SelectTableSink selectTableSink = streamPlanner.createSelectTableSink(queryResult.getSchema());
+//        TableSink tableSink = getTableSinkByPlanner(streamPlanner, targetTableName);
+
+        String[] sinkFieldNames = selectTableSink.getTableSchema().getFieldNames();
         String[] queryFieldNames = queryResult.getSchema().getFieldNames();
 
         if (sinkFieldNames.length != queryFieldNames.length) {

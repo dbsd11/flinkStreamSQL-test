@@ -18,11 +18,14 @@
 
 package com.dtstack.flink.sql.parser;
 
+import com.dtstack.flink.sql.classloader.ClassLoaderManager;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.SqlDialect;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.catalog.Catalog;
 import org.apache.flink.table.catalog.CatalogManager;
+import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.catalog.FunctionCatalog;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 import org.apache.flink.table.module.ModuleManager;
@@ -46,8 +49,13 @@ public class FlinkPlanner {
 
     private final Catalog catalog = new GenericInMemoryCatalog(EnvironmentSettings.DEFAULT_BUILTIN_CATALOG,
             EnvironmentSettings.DEFAULT_BUILTIN_DATABASE);
-    private final CatalogManager catalogManager =
-            new CatalogManager("builtin", catalog);
+
+    private final CatalogManager catalogManager = CatalogManager.newBuilder()
+            .defaultCatalog("builtin", catalog)
+            .classLoader(Thread.currentThread().getContextClassLoader())
+            .config(new Configuration())
+            .build();
+
     private final ModuleManager moduleManager = new ModuleManager();
     private final FunctionCatalog functionCatalog = new FunctionCatalog(
             tableConfig,

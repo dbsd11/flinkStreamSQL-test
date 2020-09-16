@@ -28,8 +28,8 @@ import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.flink.table.runtime.typeutils.BaseRowTypeInfo;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.utils.TypeConversions;
 
 
 /**
@@ -80,13 +80,13 @@ public class JoinScope {
             throw new RuntimeException("can't find ");
         }
 
-        BaseRowTypeInfo rowTypeInfo = scopeChild.getBaseRowTypeInfo();
+        RowTypeInfo rowTypeInfo = scopeChild.getBaseRowTypeInfo();
         int index = rowTypeInfo.getFieldIndex(fieldName);
         if (index == -1) {
             throw new RuntimeException("can't find field: " + fieldName);
         }
 
-        return rowTypeInfo.getLogicalTypes()[index];
+        return TypeConversions.fromDataToLogicalType(TypeConversions.fromLegacyInfoToDataType(rowTypeInfo.getFieldTypes()[index]));
     }
 
     public static class ScopeChild {
@@ -97,7 +97,7 @@ public class JoinScope {
 
         private RowTypeInfo rowTypeInfo;
 
-        private BaseRowTypeInfo baseRowTypeInfo;
+        private RowTypeInfo baseRowTypeInfo;
 
         public String getAlias() {
             return alias;
@@ -123,11 +123,11 @@ public class JoinScope {
             this.rowTypeInfo = rowTypeInfo;
         }
 
-        public BaseRowTypeInfo getBaseRowTypeInfo() {
+        public RowTypeInfo getBaseRowTypeInfo() {
             return baseRowTypeInfo;
         }
 
-        public void setBaseRowTypeInfo(BaseRowTypeInfo baseRowTypeInfo) {
+        public void setBaseRowTypeInfo(RowTypeInfo baseRowTypeInfo) {
             this.baseRowTypeInfo = baseRowTypeInfo;
         }
     }

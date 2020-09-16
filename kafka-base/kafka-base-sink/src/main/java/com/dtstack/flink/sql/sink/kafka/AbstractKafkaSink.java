@@ -46,6 +46,7 @@ import static org.apache.flink.table.types.utils.TypeConversions.fromLegacyInfoT
 /**
  * Date: 2020/3/30
  * Company: www.dtstack.com
+ *
  * @author maqi
  */
 public abstract class AbstractKafkaSink implements RetractStreamTableSink<Row>, IStreamSinkGener {
@@ -62,9 +63,9 @@ public abstract class AbstractKafkaSink implements RetractStreamTableSink<Row>, 
     protected String tableName;
 
     protected TableSchema schema;
-    protected SinkFunction<Tuple2<Boolean,Row>> kafkaProducer011;
+    protected SinkFunction<Tuple2<Boolean, Row>> kafkaProducer011;
 
-    protected Optional<FlinkKafkaPartitioner<Tuple2<Boolean,Row>>> partitioner;
+    protected Optional<FlinkKafkaPartitioner<Tuple2<Boolean, Row>>> partitioner;
 
     protected Properties getKafkaProperties(KafkaSinkTableInfo KafkaSinkTableInfo) {
         Properties props = new Properties();
@@ -112,11 +113,6 @@ public abstract class AbstractKafkaSink implements RetractStreamTableSink<Row>, 
             dataStreamSink.setParallelism(parallelism);
         }
         return dataStreamSink;
-    }
-
-    @Override
-    public void emitDataStream(DataStream<Tuple2<Boolean, Row>> dataStream) {
-        consumeDataStream(dataStream);
     }
 
     @Override

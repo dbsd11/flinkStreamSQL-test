@@ -28,8 +28,8 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import com.google.common.collect.Lists;
-import org.apache.flink.table.runtime.typeutils.BaseRowTypeInfo;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.utils.TypeConversions;
 
 import java.util.Iterator;
 import java.util.List;
@@ -93,14 +93,13 @@ public class ParserJoinField {
                         }
 
                         RowTypeInfo field = scopeChild.getRowTypeInfo();
-                        BaseRowTypeInfo baseRowTypeInfo = scopeChild.getBaseRowTypeInfo();
+                        RowTypeInfo baseRowTypeInfo = scopeChild.getBaseRowTypeInfo();
                         String[] fieldNames = field.getFieldNames();
                         TypeInformation<?>[] types = field.getFieldTypes();
-                        LogicalType[] logicalTypes = baseRowTypeInfo.getLogicalTypes();
                         for(int i=0; i< field.getTotalFields(); i++){
                             String fieldName = fieldNames[i];
                             TypeInformation<?> type = types[i];
-                            LogicalType logicalType = logicalTypes[i];
+                            LogicalType logicalType = TypeConversions.fromDataToLogicalType(TypeConversions.fromLegacyInfoToDataType(type));
                             FieldInfo fieldInfo = new FieldInfo();
                             fieldInfo.setTable(tableIdentify.getSimple());
                             fieldInfo.setFieldName(fieldName);
@@ -122,8 +121,8 @@ public class ParserJoinField {
         List<FieldInfo> fieldInfoList = Lists.newArrayList();
         while(true) {
             JoinScope.ScopeChild resolved;
-            BaseRowTypeInfo field;
-            BaseRowTypeInfo baseRowTypeInfo;
+            RowTypeInfo field;
+            RowTypeInfo baseRowTypeInfo;
             if(!prefixId.hasNext()) {
                 return fieldInfoList;
             }
@@ -131,11 +130,11 @@ public class ParserJoinField {
             resolved = (JoinScope.ScopeChild)prefixId.next();
             int fieldTypeLength = resolved.getBaseRowTypeInfo().getFieldTypes().length;
             if(fieldTypeLength == 2
-                    && resolved.getRowTypeInfo().getFieldTypes()[1].getClass().equals(BaseRowTypeInfo.class)){
-                field = (BaseRowTypeInfo) resolved.getBaseRowTypeInfo().getFieldTypes()[1];
+                    && resolved.getRowTypeInfo().getFieldTypes()[1].getClass().equals(RowTypeInfo.class)){
+                field = (RowTypeInfo) resolved.getBaseRowTypeInfo().getFieldTypes()[1];
             } else if(fieldTypeLength ==1
-                    && resolved.getRowTypeInfo().getFieldTypes()[0].getClass().equals(BaseRowTypeInfo.class)){
-                field = (BaseRowTypeInfo) resolved.getBaseRowTypeInfo().getFieldTypes()[0];
+                    && resolved.getRowTypeInfo().getFieldTypes()[0].getClass().equals(RowTypeInfo.class)){
+                field = (RowTypeInfo) resolved.getBaseRowTypeInfo().getFieldTypes()[0];
             }else{
                 field = resolved.getBaseRowTypeInfo();
             }
@@ -143,11 +142,10 @@ public class ParserJoinField {
             baseRowTypeInfo = field;
             String[] fieldNames = field.getFieldNames();
             TypeInformation<?>[] types = field.getFieldTypes();
-            LogicalType[] logicalTypes = baseRowTypeInfo.getLogicalTypes();
             for(int i=0; i< field.getTotalFields(); i++){
                 String fieldName = fieldNames[i];
                 TypeInformation<?> type = types[i];
-                LogicalType logicalType = logicalTypes[i];
+                LogicalType logicalType = TypeConversions.fromDataToLogicalType(TypeConversions.fromLegacyInfoToDataType(type));
                 FieldInfo fieldInfo = new FieldInfo();
                 fieldInfo.setTable(resolved.getAlias());
                 fieldInfo.setFieldName(fieldName);

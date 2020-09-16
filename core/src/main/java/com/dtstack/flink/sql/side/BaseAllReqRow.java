@@ -24,7 +24,7 @@ import com.dtstack.flink.sql.util.RowDataComplete;
 import org.apache.calcite.sql.JoinType;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.table.dataformat.BaseRow;
+import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * @author xuchao
  */
 
-public abstract class BaseAllReqRow extends RichFlatMapFunction<Row, BaseRow> implements ISideReqRow {
+public abstract class BaseAllReqRow extends RichFlatMapFunction<Row, RowData> implements ISideReqRow {
 
     private static final Logger LOG = LoggerFactory.getLogger(BaseAllReqRow.class);
 
@@ -87,7 +87,7 @@ public abstract class BaseAllReqRow extends RichFlatMapFunction<Row, BaseRow> im
         return obj;
     }
 
-    protected void sendOutputRow(Row value, Object sideInput, Collector<BaseRow> out) {
+    protected void sendOutputRow(Row value, Object sideInput, Collector<RowData> out) {
         if (sideInput == null && sideInfo.getJoinType() != JoinType.LEFT) {
             return;
         }

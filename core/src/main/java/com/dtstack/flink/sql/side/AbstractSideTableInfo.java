@@ -22,9 +22,10 @@ package com.dtstack.flink.sql.side;
 
 import com.dtstack.flink.sql.table.AbstractTableInfo;
 import com.google.common.collect.Lists;
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import org.apache.flink.table.runtime.typeutils.BaseRowTypeInfo;
+import org.apache.flink.table.runtime.typeutils.BigDecimalTypeInfo;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.LogicalType;
@@ -104,13 +105,15 @@ public abstract class AbstractSideTableInfo extends AbstractTableInfo implements
         return new RowTypeInfo(types, fieldNames);
     }
 
-    public BaseRowTypeInfo getBaseRowTypeInfo(){
+    public RowTypeInfo getBaseRowTypeInfo(){
         String[] fieldNames = getFields();
         Class[] fieldClass = getFieldClasses();
-        LogicalType[] logicalTypes = new LogicalType[fieldClass.length];
+        TypeInformation[] types = new TypeInformation[fieldClass.length];
+//        LogicalType[] logicalTypes = new LogicalType[fieldClass.length];
         for (int i = 0; i < fieldClass.length; i++) {
             if(fieldClass[i].getName().equals(BigDecimal.class.getName())){
-                logicalTypes[i] = new DecimalType(DecimalType.MAX_PRECISION, 18);
+                types[i] = new BigDecimalTypeInfo(DecimalType.MAX_PRECISION, 18);
+//                logicalTypes[i] = new DecimalType(DecimalType.MAX_PRECISION, 18);
                 continue;
             }
 
@@ -119,10 +122,10 @@ public abstract class AbstractSideTableInfo extends AbstractTableInfo implements
                 throw new RuntimeException(String.format("not support table % field %s type %s", getName(), fieldNames[i], fieldClass[i]));
             }
 
-            logicalTypes[i] = optionalDataType.get().getLogicalType();
+            types[i] = TypeConversions.fromDataTypeToLegacyInfo(optionalDataType.get());
         }
 
-        return new BaseRowTypeInfo(logicalTypes, fieldNames);
+        return new RowTypeInfo(types, fieldNames);
     }
 
     public String getCacheType() {

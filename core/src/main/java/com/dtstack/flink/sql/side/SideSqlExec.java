@@ -44,10 +44,10 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableSchema;
-import org.apache.flink.table.api.java.StreamTableEnvironment;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.catalog.ObjectIdentifier;
-import org.apache.flink.table.runtime.typeutils.BaseRowTypeInfo;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.utils.TypeConversions;
 import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo;
 import org.apache.flink.types.Row;
 import org.slf4j.Logger;
@@ -206,10 +206,10 @@ public class SideSqlExec {
         return aliasInfo;
     }
 
-    public BaseRowTypeInfo buildOutRowTypeInfo(List<FieldInfo> sideJoinFieldInfo,
+    public RowTypeInfo buildOutRowTypeInfo(List<FieldInfo> sideJoinFieldInfo,
                                                HashBasedTable<String, String, String> mappingTable) {
-        // TypeInformation[] sideOutTypes = new TypeInformation[sideJoinFieldInfo.size()];
-        LogicalType[] sideOutTypes = new LogicalType[sideJoinFieldInfo.size()];
+        TypeInformation[] sideOutTypes = new TypeInformation[sideJoinFieldInfo.size()];
+//        LogicalType[] sideOutTypes = new LogicalType[sideJoinFieldInfo.size()];
         String[] sideOutNames = new String[sideJoinFieldInfo.size()];
         for (int i = 0; i < sideJoinFieldInfo.size(); i++) {
             FieldInfo fieldInfo = sideJoinFieldInfo.get(i);
@@ -219,10 +219,10 @@ public class SideSqlExec {
             String mappingFieldName = mappingTable.get(tableName, fieldName);
             Preconditions.checkNotNull(mappingFieldName, fieldInfo + " not mapping any field! it may be frame bug");
 
-            sideOutTypes[i] = fieldInfo.getLogicalType();
+            sideOutTypes[i] = fieldInfo.getTypeInformation();
             sideOutNames[i] = mappingFieldName;
         }
-        return new BaseRowTypeInfo(sideOutTypes, sideOutNames);
+        return new RowTypeInfo(sideOutTypes, sideOutNames);
     }
 
 
@@ -366,12 +366,14 @@ public class SideSqlExec {
         RowTypeInfo leftTypeInfo = new RowTypeInfo(leftTable.getSchema().getFieldTypes(), leftTable.getSchema().getFieldNames());
 
         int length = leftTable.getSchema().getFieldDataTypes().length;
-        LogicalType[] logicalTypes = new LogicalType[length];
+        TypeInformation[] types = new TypeInformation[length];
+//        LogicalType[] logicalTypes = new LogicalType[length];
         for(int i=0; i<length; i++){
-            logicalTypes[i] = leftTable.getSchema().getFieldDataTypes()[i].getLogicalType();
+            types[i] = TypeConversions.fromDataTypeToLegacyInfo(leftTable.getSchema().getFieldDataTypes()[i]);
+//            logicalTypes[i] = leftTable.getSchema().getFieldDataTypes()[i].getLogicalType();
         }
 
-        BaseRowTypeInfo leftBaseTypeInfo = new BaseRowTypeInfo(logicalTypes, leftTable.getSchema().getFieldNames());
+        RowTypeInfo leftBaseTypeInfo = new RowTypeInfo(types, leftTable.getSchema().getFieldNames());
 
         leftScopeChild.setRowTypeInfo(leftTypeInfo);
         leftScopeChild.setBaseRowTypeInfo(leftBaseTypeInfo);
@@ -429,7 +431,7 @@ public class SideSqlExec {
             dsOut = SideAsyncOperator.getSideJoinDataStream(adaptStream, sideTableInfo.getType(), localSqlPluginPath, typeInfo, joinInfo, sideJoinFieldInfo, sideTableInfo, pluginLoadMode);
         }
 
-        BaseRowTypeInfo sideOutTypeInfo = buildOutRowTypeInfo(sideJoinFieldInfo, mappingTable);
+        RowTypeInfo sideOutTypeInfo = buildOutRowTypeInfo(sideJoinFieldInfo, mappingTable);
 
         dsOut.getTransformation().setOutputType(sideOutTypeInfo);
 

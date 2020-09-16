@@ -22,6 +22,7 @@ import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ConfigurationUtils;
+import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 
@@ -38,9 +39,7 @@ public interface AbstractClusterClientFactory {
     default ClusterSpecification getClusterSpecification(Configuration configuration) {
         checkNotNull(configuration);
 
-        final int jobManagerMemoryMb = ConfigurationUtils
-                .getJobManagerHeapMemory(configuration)
-                .getMebiBytes();
+        final int jobManagerMemoryMb = configuration.get(JobManagerOptions.JVM_HEAP_MEMORY).getMebiBytes();
 
         final int taskManagerMemoryMb = TaskExecutorProcessUtils
                 .processSpecFromConfig(TaskExecutorProcessUtils.getConfigurationMapLegacyTaskManagerHeapSizeToConfigOption(
