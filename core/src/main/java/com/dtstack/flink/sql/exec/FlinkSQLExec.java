@@ -45,6 +45,7 @@ import scala.Tuple2;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.UUID;
 
 
 /**
@@ -98,6 +99,7 @@ public class FlinkSQLExec {
             tableEnv.insertInto(targetTableName, newTable);
         }
 
+        tableEnv.execute(String.join("", "insert_", targetTableName, "_", UUID.randomUUID().toString()));
     }
 
     private static TableSink getTableSinkByPlanner(StreamPlanner streamPlanner, String targetTableName)
