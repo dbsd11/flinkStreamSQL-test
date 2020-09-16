@@ -78,6 +78,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  *  任务执行时的流程方法
@@ -170,6 +171,8 @@ public class ExecuteProcessHelper {
         if (env instanceof MyLocalStreamEnvironment) {
             ((MyLocalStreamEnvironment) env).setClasspaths(ClassLoaderManager.getClassPath());
         }
+
+        tableEnv.execute(null);
         return env;
     }
 

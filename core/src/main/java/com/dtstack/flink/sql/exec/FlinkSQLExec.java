@@ -98,8 +98,6 @@ public class FlinkSQLExec {
             newTable = queryResult.select(String.join(",", ignoreCase(queryFieldNames, sinkFieldNames)));
             tableEnv.insertInto(targetTableName, newTable);
         }
-
-        tableEnv.execute(String.join("", "insert_", targetTableName, "_", UUID.randomUUID().toString()));
     }
 
     private static TableSink getTableSinkByPlanner(StreamPlanner streamPlanner, String targetTableName)
