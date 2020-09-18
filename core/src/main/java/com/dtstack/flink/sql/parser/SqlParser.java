@@ -73,7 +73,7 @@ public class SqlParser {
         SqlTree sqlTree = new SqlTree();
         AbstractTableInfoParser tableInfoParser = new AbstractTableInfoParser();
         for(String childSql : sqlArr){
-            if(Strings.isNullOrEmpty(childSql)){
+            if(Strings.isNullOrEmpty(childSql) || childSql.trim().startsWith("//")){
                 continue;
             }
             boolean result = false;

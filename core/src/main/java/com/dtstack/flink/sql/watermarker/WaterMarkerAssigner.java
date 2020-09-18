@@ -78,6 +78,8 @@ public class WaterMarkerAssigner {
 
         String fromTag = "Source:" + sourceTableInfo.getName();
         waterMarker.setFromSourceTag(fromTag);
+
+
         return dataStream.assignTimestampsAndWatermarks(waterMarker);
     }
 }

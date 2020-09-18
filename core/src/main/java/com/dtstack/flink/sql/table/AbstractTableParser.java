@@ -93,7 +93,8 @@ public abstract class AbstractTableParser {
             fieldRow = fieldRow.trim();
 
             if (StringUtils.isBlank(fieldRow)) {
-                throw new RuntimeException(String.format("table [%s],exists field empty.", tableInfo.getName()));
+                continue;
+//                throw new RuntimeException(String.format("table [%s],exists field empty.", tableInfo.getName()));
             }
 
             String[] fieldInfoArr = fieldRow.split("\\s+");
