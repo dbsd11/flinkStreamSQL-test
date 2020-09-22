@@ -29,6 +29,7 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-common</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -41,30 +42,35 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-planner-blink_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-runtime-blink_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-java_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-scala_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-cep-scala_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -103,6 +109,12 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
         </dependency>
 
         <dependency>
@@ -156,6 +168,7 @@
                                 <includes>
                                     <include>com.fasterxml.jackson.*</include>
                                     <include>com.google.guava</include>
+                                    <include>commons-*</include>
                                 </includes>
                             </artifactSet>
                             <filters>

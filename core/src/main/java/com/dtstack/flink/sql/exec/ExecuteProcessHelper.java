@@ -172,7 +172,7 @@ public class ExecuteProcessHelper {
             ((MyLocalStreamEnvironment) env).setClasspaths(ClassLoaderManager.getClassPath());
         }
 
-        tableEnv.execute(null);
+        tableEnv.execute(paramsInfo.getName());
         return env;
     }
 

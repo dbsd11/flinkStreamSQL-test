@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -132,20 +133,28 @@ public class LauncherMain {
 
 
     public static void main(String[] args) throws Exception {
+        System.out.println("input args:"+ Arrays.toString(args));
         JobParamsInfo jobParamsInfo = parseArgs(args);
         ClusterMode execMode = ClusterMode.valueOf(jobParamsInfo.getMode());
+        System.out.println("execMode :"+ execMode);
 
         switch (execMode) {
             case local:
                 Main.main(jobParamsInfo.getExecArgs());
                 break;
             case yarn:
+                System.setProperty("HADOOP_USER_NAME", "flink");
+                System.setProperty("user.name", "flink");
                 new YarnSessionClusterExecutor(jobParamsInfo).exec();
                 break;
             case yarnPer:
+                System.setProperty("HADOOP_USER_NAME", "flink");
+                System.setProperty("user.name", "flink");
                 new YarnJobClusterExecutor(jobParamsInfo).exec();
                 break;
             case standalone:
+                System.setProperty("HADOOP_USER_NAME", "flink");
+                System.setProperty("user.name", "flink");
                 new StandaloneExecutor(jobParamsInfo).exec();
                 break;
             default:
