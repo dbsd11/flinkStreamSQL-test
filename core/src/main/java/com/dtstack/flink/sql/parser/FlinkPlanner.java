@@ -73,7 +73,7 @@ public class FlinkPlanner {
     }
 
     public CalciteParser getParser(){
-        return getParserBySqlDialect(SqlDialect.DEFAULT);
+        return getParserBySqlDialect(SqlDialect.HIVE);
     }
 
     public CalciteParser getParserBySqlDialect(SqlDialect sqlDialect) {

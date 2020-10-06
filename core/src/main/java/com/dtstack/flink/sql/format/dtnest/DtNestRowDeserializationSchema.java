@@ -22,6 +22,7 @@ import com.dtstack.flink.sql.table.AbstractTableInfo;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.typeutils.ObjectArrayTypeInfo;
@@ -33,13 +34,18 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.Arra
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.NullNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.types.Row;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +58,7 @@ import java.util.Map;
  * @author maqi
  */
 public class DtNestRowDeserializationSchema extends AbstractDeserializationSchema<Row> {
+    private static final Logger LOG = LoggerFactory.getLogger(DtNestRowDeserializationSchema.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -101,17 +108,30 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
             }
             return;
         }
-        Iterator<String> iterator = jsonNode.fieldNames();
-        while (iterator.hasNext()) {
-            String next = iterator.next();
-            JsonNode child = jsonNode.get(next);
-            String nodeKey = getNodeKey(prefix, next);
 
-            nodeAndJsonNodeMapping.put(nodeKey, child);
-            if (child.isArray()) {
-                parseTree(child, nodeKey);
-            } else {
-                parseTree(child, nodeKey);
+        Iterator<String> iterator = jsonNode.fieldNames();
+
+        if (!iterator.hasNext()) {
+            boolean needParseJsonStr = this.rowAndFieldMapping.values().stream().anyMatch(fromRowField -> fromRowField.startsWith(prefix) && !fromRowField.endsWith(prefix));
+            if (needParseJsonStr) {
+                try {
+                    jsonNode = objectMapper.readTree(jsonNode.asText());
+                    parseTree(jsonNode, prefix);
+                } catch (Exception e) {
+                }
+            }
+        } else {
+            while (iterator.hasNext()) {
+                String next = iterator.next();
+                JsonNode child = jsonNode.get(next);
+                String nodeKey = getNodeKey(prefix, next);
+
+                nodeAndJsonNodeMapping.put(nodeKey, child);
+                if (child.isArray()) {
+                    parseTree(child, nodeKey);
+                } else {
+                    parseTree(child, nodeKey);
+                }
             }
         }
     }
@@ -154,7 +174,7 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
         } else if (info.getTypeClass().equals(Types.SQL_TIMESTAMP.getTypeClass())) {
             // local zone
             return Timestamp.valueOf(node.asText());
-        }  else if (info instanceof RowTypeInfo) {
+        } else if (info instanceof RowTypeInfo) {
             return convertRow(node, (RowTypeInfo) info);
         } else if (info instanceof ObjectArrayTypeInfo) {
             return convertObjectArray(node, ((ObjectArrayTypeInfo) info).getComponentInfo());
@@ -179,7 +199,7 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
                 if (node == null) {
                     if (fieldExtraInfo != null && fieldExtraInfo.getNotNull()) {
                         throw new IllegalStateException("Failed to find field with name '"
-                            + fieldNames[i] + "'.");
+                                + fieldNames[i] + "'.");
                     } else {
                         row.setField(i, null);
                     }
@@ -220,6 +240,7 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
         }
         return array;
     }
+
     @Override
     public TypeInformation<Row> getProducedType() {
         return typeInfo;
