@@ -31,7 +31,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.table.dataformat.BaseRow;
+import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
@@ -99,7 +99,7 @@ public abstract class AbstractRdbAllReqRow extends BaseAllReqRow {
     }
 
     @Override
-    public void flatMap(Row value, Collector<BaseRow> out) throws Exception {
+    public void flatMap(Row value, Collector<RowData> out) throws Exception {
         List<Integer> equalValIndex = sideInfo.getEqualValIndex();
         ArrayList<Object> inputParams = equalValIndex.stream()
                 .map(value::getField)
