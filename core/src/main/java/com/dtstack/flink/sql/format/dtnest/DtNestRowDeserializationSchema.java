@@ -43,6 +43,7 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -116,7 +117,9 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
             if (needParseJsonStr) {
                 try {
                     jsonNode = objectMapper.readTree(jsonNode.asText());
-                    parseTree(jsonNode, prefix);
+                    if (jsonNode != null && !jsonNode.isMissingNode()) {
+                        parseTree(jsonNode, prefix);
+                    }
                 } catch (Exception e) {
                 }
             }
