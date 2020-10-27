@@ -118,7 +118,7 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
             if (needParseJsonStr) {
                 try {
                     jsonNode = objectMapper.readTree(jsonNode.asText().trim());
-                    if (!jsonNode.isNull() && !jsonNode.isMissingNode()) {
+                    if (!jsonNode.isNull() && !jsonNode.isMissingNode() && (jsonNode.isObject() || jsonNode.isArray())) {
                         parseTree(jsonNode, prefix);
                     }
                 } catch (Exception e) {
