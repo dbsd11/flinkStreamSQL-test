@@ -137,4 +137,9 @@ public class ExtendEs6ApiCallBridge implements ElasticsearchApiCallBridge<RestHi
         builder.setBackoffPolicy(backoffPolicy);
     }
 
+    @Override
+    public void verifyClientConnection(RestHighLevelClient restHighLevelClient) throws IOException {
+        restHighLevelClient.ping(RequestOptions.DEFAULT);
+    }
+
 }
