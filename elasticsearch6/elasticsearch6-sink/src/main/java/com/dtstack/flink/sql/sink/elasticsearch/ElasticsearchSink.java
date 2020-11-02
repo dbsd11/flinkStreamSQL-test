@@ -115,6 +115,7 @@ public class ElasticsearchSink implements RetractStreamTableSink<Row>, IStreamSi
                 }).collect(Collectors.toList());
 
         CustomerSinkFunc customerSinkFunc = new CustomerSinkFunc(index, type, Arrays.asList(fieldNames), Arrays.asList(columnTypes), idIndexList);
+        customerSinkFunc.setUpdateMode(esTableInfo.getUpdateMode());
         return new MetricElasticsearch6Sink(userConfig, transports, customerSinkFunc, esTableInfo);
     }
 

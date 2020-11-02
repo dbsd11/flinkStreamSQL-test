@@ -43,6 +43,8 @@ public class ElasticsearchTableInfo extends AbstractTargetTableInfo {
 
     private String esType;
 
+    private String updateMode;
+
     private boolean authMesh = false;
 
     private String userName;
@@ -85,6 +87,14 @@ public class ElasticsearchTableInfo extends AbstractTargetTableInfo {
     public String getType() {
         //return super.getType().toLowerCase() + TARGET_SUFFIX;
         return super.getType().toLowerCase();
+    }
+
+    public String getUpdateMode() {
+        return updateMode;
+    }
+
+    public void setUpdateMode(String updateMode) {
+        this.updateMode = updateMode;
     }
 
     public String getClusterName() {

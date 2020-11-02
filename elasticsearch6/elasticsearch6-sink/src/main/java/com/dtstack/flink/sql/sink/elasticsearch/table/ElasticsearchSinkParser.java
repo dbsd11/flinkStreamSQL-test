@@ -39,6 +39,8 @@ public class ElasticsearchSinkParser extends AbstractTableParser {
 
     private static final String KEY_ES6_TYPE = "estype";
 
+    private static final String KEY_ES6_UPDATE_MODE = "updateMode";
+
     private static final String KEY_ES6_ID_FIELD_INDEX_LIST = "id";
 
     private static final String KEY_ES6_AUTHMESH = "authMesh";
@@ -64,6 +66,7 @@ public class ElasticsearchSinkParser extends AbstractTableParser {
         elasticsearchTableInfo.setId((String) props.get(KEY_ES6_ID_FIELD_INDEX_LIST.toLowerCase()));
         elasticsearchTableInfo.setIndex((String) props.get(KEY_ES6_INDEX.toLowerCase()));
         elasticsearchTableInfo.setEsType((String) props.get(KEY_ES6_TYPE.toLowerCase()));
+        elasticsearchTableInfo.setUpdateMode((String) props.get(KEY_ES6_UPDATE_MODE.toLowerCase()));
 
         String authMeshStr = (String) props.get(KEY_ES6_AUTHMESH.toLowerCase());
         if (authMeshStr != null && StringUtils.equalsIgnoreCase(KEY_TRUE, authMeshStr)) {
