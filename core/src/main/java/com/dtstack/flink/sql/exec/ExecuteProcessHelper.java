@@ -18,21 +18,6 @@
 
 package com.dtstack.flink.sql.exec;
 
-import com.dtstack.flink.sql.parser.CreateFuncParser;
-import com.dtstack.flink.sql.parser.CreateTmpTableParser;
-import com.dtstack.flink.sql.parser.FlinkPlanner;
-import com.dtstack.flink.sql.parser.InsertSqlParser;
-import com.dtstack.flink.sql.parser.SqlParser;
-import com.dtstack.flink.sql.parser.SqlTree;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.*;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
-import org.apache.flink.table.sinks.TableSink;
-
 import com.dtstack.flink.sql.classloader.ClassLoaderManager;
 import com.dtstack.flink.sql.enums.ClusterMode;
 import com.dtstack.flink.sql.enums.ECacheType;
@@ -42,8 +27,14 @@ import com.dtstack.flink.sql.environment.StreamEnvConfigManager;
 import com.dtstack.flink.sql.function.FunctionManager;
 import com.dtstack.flink.sql.option.OptionParser;
 import com.dtstack.flink.sql.option.Options;
-import com.dtstack.flink.sql.side.SideSqlExec;
+import com.dtstack.flink.sql.parser.CreateFuncParser;
+import com.dtstack.flink.sql.parser.CreateTmpTableParser;
+import com.dtstack.flink.sql.parser.FlinkPlanner;
+import com.dtstack.flink.sql.parser.InsertSqlParser;
+import com.dtstack.flink.sql.parser.SqlParser;
+import com.dtstack.flink.sql.parser.SqlTree;
 import com.dtstack.flink.sql.side.AbstractSideTableInfo;
+import com.dtstack.flink.sql.side.SideSqlExec;
 import com.dtstack.flink.sql.sink.StreamSinkFactory;
 import com.dtstack.flink.sql.source.StreamSourceFactory;
 import com.dtstack.flink.sql.table.AbstractSourceTableInfo;
@@ -62,6 +53,17 @@ import org.apache.calcite.sql.SqlInsert;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.typeutils.RowTypeInfo;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableConfig;
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
+import org.apache.flink.table.sinks.TableSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,19 +73,19 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.ArrayList;
-import java.util.UUID;
 
 /**
- *  任务执行时的流程方法
+ * 任务执行时的流程方法
  * Date: 2020/2/17
  * Company: www.dtstack.com
+ *
  * @author maqi
  */
 public class ExecuteProcessHelper {
@@ -132,7 +134,8 @@ public class ExecuteProcessHelper {
     }
 
     /**
-     *   非local模式或者shipfile部署模式，remoteSqlPluginPath必填
+     * 非local模式或者shipfile部署模式，remoteSqlPluginPath必填
+     *
      * @param remoteSqlPluginPath
      * @param deployMode
      * @param pluginLoadMode
@@ -166,7 +169,7 @@ public class ExecuteProcessHelper {
         // cache classPathSets
         ExecuteProcessHelper.registerPluginUrlToCachedFile(env, classPathSets);
 
-        ExecuteProcessHelper.sqlTranslation(paramsInfo.getLocalSqlPluginPath(), paramsInfo.getPluginLoadMode(),tableEnv, sqlTree, sideTableMap, registerTableCache);
+        ExecuteProcessHelper.sqlTranslation(paramsInfo.getLocalSqlPluginPath(), paramsInfo.getPluginLoadMode(), tableEnv, sqlTree, sideTableMap, registerTableCache);
 
         if (env instanceof MyLocalStreamEnvironment) {
             ((MyLocalStreamEnvironment) env).setClasspaths(ClassLoaderManager.getClassPath());
@@ -194,7 +197,7 @@ public class ExecuteProcessHelper {
     private static void sqlTranslation(String localSqlPluginPath,
                                        String pluginLoadMode,
                                        StreamTableEnvironment tableEnv,
-                                       SqlTree sqlTree,Map<String, AbstractSideTableInfo> sideTableMap,
+                                       SqlTree sqlTree, Map<String, AbstractSideTableInfo> sideTableMap,
                                        Map<String, Table> registerTableCache) throws Exception {
 
         SideSqlExec sideSqlExec = new SideSqlExec();
@@ -262,13 +265,14 @@ public class ExecuteProcessHelper {
     }
 
     /**
-     *    向Flink注册源表和结果表，返回执行时插件包的全路径
+     * 向Flink注册源表和结果表，返回执行时插件包的全路径
+     *
      * @param sqlTree
      * @param env
      * @param tableEnv
      * @param localSqlPluginPath
      * @param remoteSqlPluginPath
-     * @param pluginLoadMode   插件加载模式 classpath or shipfile
+     * @param pluginLoadMode      插件加载模式 classpath or shipfile
      * @param sideTableMap
      * @param registerTableCache
      * @return
@@ -336,7 +340,8 @@ public class ExecuteProcessHelper {
     }
 
     /**
-     *   perjob模式将job依赖的插件包路径存储到cacheFile，在外围将插件包路径传递给jobgraph
+     * perjob模式将job依赖的插件包路径存储到cacheFile，在外围将插件包路径传递给jobgraph
+     *
      * @param env
      * @param classPathSet
      */
@@ -350,9 +355,11 @@ public class ExecuteProcessHelper {
     }
 
     public static StreamExecutionEnvironment getStreamExeEnv(Properties confProperties, String deployMode) throws Exception {
-        StreamExecutionEnvironment env = !ClusterMode.local.name().equals(deployMode) ?
-                StreamExecutionEnvironment.getExecutionEnvironment() :
-                new MyLocalStreamEnvironment();
+        StreamExecutionEnvironment env =
+//                ClusterMode.standalonePer.name().equals(deployMode) ? StreamExecutionEnvironment.createRemoteEnvironment("localhost", 8081, confProperties.contains("standalonePerLibs") ? confProperties.getProperty("standalonePerLibs").split(",") : null) :
+                !ClusterMode.local.name().equals(deployMode) && !confProperties.contains("vvp.job") ?
+                        StreamExecutionEnvironment.getExecutionEnvironment() :
+                        new MyLocalStreamEnvironment();
 
         StreamEnvConfigManager.streamExecutionEnvironmentConfig(env, confProperties);
         return env;
@@ -379,7 +386,7 @@ public class ExecuteProcessHelper {
 
     private static void timeZoneCheck(String timeZone) {
         ArrayList<String> zones = Lists.newArrayList(TimeZone.getAvailableIDs());
-        if (!zones.contains(timeZone)){
+        if (!zones.contains(timeZone)) {
             throw new IllegalArgumentException(String.format(" timezone of %s is Incorrect!", timeZone));
         }
     }

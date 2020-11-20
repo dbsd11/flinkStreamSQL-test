@@ -31,7 +31,9 @@ public enum ClusterMode {
     //submit job to flink-session which is already run on yarn
     yarn(2),
     //submit job to yarn cluster as an application
-    yarnPer(3);
+    yarnPer(3),
+    //submit job to standalone cluster as an application
+    standalonePer(4);
 
     private int type;
 

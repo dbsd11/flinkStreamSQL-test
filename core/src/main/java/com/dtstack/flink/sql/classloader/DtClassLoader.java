@@ -130,7 +130,7 @@ public class DtClassLoader extends URLClassLoader {
             }
         }
 
-        if(!name.contains("gotin")){
+        if(name.contains("dtstack")){
             return loadClass(name.replaceAll("dtstack", "gotin"), resolve);
         }
 

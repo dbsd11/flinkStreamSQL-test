@@ -19,14 +19,14 @@
 
 package com.dtstack.flink.sql.launcher;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
+import com.dtstack.flink.sql.Main;
+import com.dtstack.flink.sql.enums.ClusterMode;
 import com.dtstack.flink.sql.launcher.entity.JobParamsInfo;
 import com.dtstack.flink.sql.launcher.executor.StandaloneExecutor;
 import com.dtstack.flink.sql.launcher.executor.YarnJobClusterExecutor;
 import com.dtstack.flink.sql.launcher.executor.YarnSessionClusterExecutor;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
-import com.dtstack.flink.sql.enums.ClusterMode;
-import com.dtstack.flink.sql.Main;
 import com.dtstack.flink.sql.option.OptionParser;
 import com.dtstack.flink.sql.option.Options;
 import com.dtstack.flink.sql.util.PluginUtil;
@@ -47,11 +47,11 @@ import java.util.Properties;
 /**
  * Date: 2017/2/20
  * Company: www.dtstack.com
+ *
  * @author xuchao
  */
 
 public class LauncherMain {
-
 
 
     public static JobParamsInfo parseArgs(String[] args) throws Exception {
@@ -133,10 +133,10 @@ public class LauncherMain {
 
 
     public static void main(String[] args) throws Exception {
-        System.out.println("input args:"+ Arrays.toString(args));
+        System.out.println("input args:" + Arrays.toString(args));
         JobParamsInfo jobParamsInfo = parseArgs(args);
         ClusterMode execMode = ClusterMode.valueOf(jobParamsInfo.getMode());
-        System.out.println("execMode :"+ execMode);
+        System.out.println("execMode :" + execMode);
 
         switch (execMode) {
             case local:
@@ -153,6 +153,11 @@ public class LauncherMain {
                 new YarnJobClusterExecutor(jobParamsInfo).exec();
                 break;
             case standalone:
+                System.setProperty("HADOOP_USER_NAME", "flink");
+                System.setProperty("user.name", "flink");
+                new StandaloneExecutor(jobParamsInfo).exec();
+                break;
+            case standalonePer:
                 System.setProperty("HADOOP_USER_NAME", "flink");
                 System.setProperty("user.name", "flink");
                 new StandaloneExecutor(jobParamsInfo).exec();
