@@ -164,7 +164,9 @@ public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
         int length = Math.min(element.getArity(), fieldNames.size());
         for (int i = 0; i < length; i++) {
             dataMap.put(fieldNames.get(i), element.getField(i));
-            dataMap.put(fieldNames.get(i), fieldValueStr2Obj(fieldNames.get(i), (String) element.getField(i)));
+            if (fieldNames.get(i).contains("json") && element.getField(i) instanceof String) {
+                dataMap.put(fieldNames.get(i), fieldValueStr2Obj(fieldNames.get(i), (String) element.getField(i)));
+            }
         }
 
         if (StringUtils.isEmpty(idFieldStr)) {
