@@ -19,22 +19,23 @@
 package com.dtstack.flink.sql.sink.elasticsearch;
 
 import com.dtstack.flink.sql.enums.EUpdateMode;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.connectors.elasticsearch.ElasticsearchSinkFunction;
 import org.apache.flink.streaming.connectors.elasticsearch.RequestIndexer;
 import org.apache.flink.types.Row;
-
-import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.action.DocWriteRequest;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Requests;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -62,6 +63,8 @@ public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
     private List<String> fieldTypes;
 
     private String updateMode;
+
+    private ObjectMapper jsonObjectMapper = new ObjectMapper();
 
     private transient Counter outRecords;
 
@@ -128,6 +131,7 @@ public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
         int length = Math.min(element.getArity(), fieldNames.size());
         for (int i = 0; i < length; i++) {
             dataMap.put(fieldNames.get(i), element.getField(i));
+            dataMap.put(fieldNames.get(i), fieldValueStr2Obj(fieldNames.get(i), (String) element.getField(i)));
         }
 
         if (StringUtils.isEmpty(idFieldStr)) {
@@ -158,6 +162,7 @@ public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
         int length = Math.min(element.getArity(), fieldNames.size());
         for (int i = 0; i < length; i++) {
             dataMap.put(fieldNames.get(i), element.getField(i));
+            dataMap.put(fieldNames.get(i), fieldValueStr2Obj(fieldNames.get(i), (String) element.getField(i)));
         }
 
         if (StringUtils.isEmpty(idFieldStr)) {
@@ -176,5 +181,27 @@ public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
                 .doc(dataMap)
                 .upsert(dataMap)
                 .docAsUpsert(true);
+    }
+
+    Object fieldValueStr2Obj(String fieldName, String fieldValueStr) {
+        if (StringUtils.isEmpty(fieldValueStr)) {
+            return null;
+        }
+
+        Object obj = null;
+        if (fieldName.contains("jsonObj_")) {
+            try {
+                obj = new ObjectMapper().readValue(fieldValueStr, HashMap.class);
+            } catch (IOException e) {
+                obj = new HashMap<>(0);
+            }
+        } else if (fieldName.contains("jsonArray_")) {
+            try {
+                obj = new ObjectMapper().readValue(fieldValueStr, LinkedList.class);
+            } catch (IOException e) {
+                obj = new LinkedList<>();
+            }
+        }
+        return obj;
     }
 }
