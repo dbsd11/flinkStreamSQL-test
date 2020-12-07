@@ -33,7 +33,6 @@ import org.elasticsearch.client.Requests;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -192,17 +191,21 @@ public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
             return null;
         }
 
+        if (jsonObjectMapper == null) {
+            this.jsonObjectMapper = new ObjectMapper();
+        }
+
         Object obj = null;
         if (fieldName.contains("jsonObj_")) {
             try {
                 obj = jsonObjectMapper.readValue(fieldValueStr, HashMap.class);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 obj = new HashMap<>(0);
             }
         } else if (fieldName.contains("jsonArray_")) {
             try {
                 obj = jsonObjectMapper.readValue(fieldValueStr, LinkedList.class);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 obj = new LinkedList<>();
             }
         }
