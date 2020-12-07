@@ -64,7 +64,7 @@ public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
 
     private String updateMode;
 
-    private ObjectMapper jsonObjectMapper = new ObjectMapper();
+    private transient ObjectMapper jsonObjectMapper = new ObjectMapper();
 
     private transient Counter outRecords;
 
@@ -191,13 +191,13 @@ public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
         Object obj = null;
         if (fieldName.contains("jsonObj_")) {
             try {
-                obj = new ObjectMapper().readValue(fieldValueStr, HashMap.class);
+                obj = jsonObjectMapper.readValue(fieldValueStr, HashMap.class);
             } catch (IOException e) {
                 obj = new HashMap<>(0);
             }
         } else if (fieldName.contains("jsonArray_")) {
             try {
-                obj = new ObjectMapper().readValue(fieldValueStr, LinkedList.class);
+                obj = jsonObjectMapper.readValue(fieldValueStr, LinkedList.class);
             } catch (IOException e) {
                 obj = new LinkedList<>();
             }
