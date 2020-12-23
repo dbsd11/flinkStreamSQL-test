@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
  * @date 2020/1/9 - 15:10
  */
 public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
+    private static final Long serialVersionUID = -5088815908830393795L;
 
     private final Logger logger = LoggerFactory.getLogger(CustomerSinkFunc.class);
     /**
@@ -195,7 +196,7 @@ public class CustomerSinkFunc implements ElasticsearchSinkFunction<Tuple2> {
             this.jsonObjectMapper = new ObjectMapper();
         }
 
-        Object obj = null;
+        Object obj = fieldValueStr;
         if (fieldName.contains("jsonObj_")) {
             try {
                 obj = jsonObjectMapper.readValue(fieldValueStr, HashMap.class);

@@ -42,6 +42,8 @@ import java.math.BigInteger;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Objects;
 
 /**
@@ -73,6 +75,8 @@ public class JsonTupleSerializationSchema implements SerializationSchema<Tuple2<
 
     /** Reusable object node. */
     private transient ObjectNode node;
+
+    private transient org.codehaus.jackson.map.ObjectMapper jsonObjectMapper = new org.codehaus.jackson.map.ObjectMapper();
 
     private String updateMode;
 
@@ -151,7 +155,15 @@ public class JsonTupleSerializationSchema implements SerializationSchema<Tuple2<
         for (int i = 0; i < fieldNames.length; i++) {
             final String name = fieldNames[i];
 
-            final JsonNode fieldConverted = convert(reuse, reuse.get(name), fieldTypes[i], row.getField(i));
+            JsonNode fieldConverted = convert(reuse, reuse.get(name), fieldTypes[i], row.getField(i));
+
+            if (name.contains("json") && row.getField(i) instanceof String) {
+                try{
+                    fieldConverted = mapper.valueToTree(fieldValueStr2Obj(name, (String) row.getField(i)));
+                }catch (Exception e){
+                }
+            }
+
             reuse.set(name, fieldConverted);
         }
 
@@ -230,5 +242,31 @@ public class JsonTupleSerializationSchema implements SerializationSchema<Tuple2<
             reuse.add(convert(reuse, null, info, object));
         }
         return reuse;
+    }
+
+    Object fieldValueStr2Obj(String fieldName, String fieldValueStr) {
+        if (StringUtils.isEmpty(fieldValueStr)) {
+            return null;
+        }
+
+        if (jsonObjectMapper == null) {
+            this.jsonObjectMapper = new org.codehaus.jackson.map.ObjectMapper();
+        }
+
+        Object obj = fieldValueStr;
+        if (fieldName.contains("jsonObj_")) {
+            try {
+                obj = jsonObjectMapper.readValue(fieldValueStr, HashMap.class);
+            } catch (Exception e) {
+                obj = new HashMap<>(0);
+            }
+        } else if (fieldName.contains("jsonArray_")) {
+            try {
+                obj = jsonObjectMapper.readValue(fieldValueStr, LinkedList.class);
+            } catch (Exception e) {
+                obj = new LinkedList<>();
+            }
+        }
+        return obj;
     }
 }
