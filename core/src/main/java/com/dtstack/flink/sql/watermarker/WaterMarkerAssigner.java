@@ -21,14 +21,27 @@
 package com.dtstack.flink.sql.watermarker;
 
 import com.dtstack.flink.sql.table.AbstractSourceTableInfo;
+import com.google.common.base.Strings;
+import org.apache.flink.api.common.eventtime.TimestampAssigner;
+import org.apache.flink.api.common.eventtime.TimestampAssignerSupplier;
+import org.apache.flink.api.common.eventtime.WatermarkGenerator;
+import org.apache.flink.api.common.eventtime.WatermarkGeneratorSupplier;
+import org.apache.flink.api.common.eventtime.WatermarkOutput;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import com.google.common.base.Strings;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
+import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.runtime.operators.util.AssignerWithPeriodicWatermarksAdapter;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
+
 import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+
 /**
  * define watermarker
  * Date: 2018/6/29
@@ -79,7 +92,53 @@ public class WaterMarkerAssigner {
         String fromTag = "Source:" + sourceTableInfo.getName();
         waterMarker.setFromSourceTag(fromTag);
 
+        Long autoWatermarkInterval = dataStream.getExecutionConfig().getAutoWatermarkInterval();
+        WatermarkStrategy<Row> watermarkStrategy = new MyWatermarkStrategy<>(waterMarker, autoWatermarkInterval);
+        watermarkStrategy.withIdleness(Duration.of(autoWatermarkInterval, ChronoUnit.MILLIS));
+        return dataStream.assignTimestampsAndWatermarks(watermarkStrategy);
+    }
 
-        return dataStream.assignTimestampsAndWatermarks(waterMarker);
+    public static class MyWatermarkStrategy<T> implements WatermarkStrategy<T> {
+        private static final long serialVersionUID = 1L;
+        private final AssignerWithPeriodicWatermarks<T> wms;
+        private final Long autoWatermarkInterval;
+
+        public MyWatermarkStrategy(AssignerWithPeriodicWatermarks<T> wms, Long autoWatermarkInterval) {
+            this.wms = (AssignerWithPeriodicWatermarks)Preconditions.checkNotNull(wms);
+            this.autoWatermarkInterval = autoWatermarkInterval;
+        }
+
+        @Override
+        public TimestampAssigner<T> createTimestampAssigner(TimestampAssignerSupplier.Context context) {
+            return this.wms;
+        }
+
+        @Override
+        public WatermarkGenerator<T> createWatermarkGenerator(org.apache.flink.api.common.eventtime.WatermarkGeneratorSupplier.Context context) {
+            return new MyAssignerWithPeriodicWatermarksAdapter(this.wms, this.autoWatermarkInterval);
+        }
+    }
+
+    public static class MyAssignerWithPeriodicWatermarksAdapter<T> implements WatermarkGenerator<T>{
+        private final AssignerWithPeriodicWatermarks<T> wms;
+        private final Long autoWatermarkInterval;
+
+        public MyAssignerWithPeriodicWatermarksAdapter(AssignerWithPeriodicWatermarks<T> wms, Long autoWatermarkInterval) {
+            this.wms = (AssignerWithPeriodicWatermarks)Preconditions.checkNotNull(wms);
+            this.autoWatermarkInterval = autoWatermarkInterval;
+        }
+
+        @Override
+        public void onEvent(T event, long eventTimestamp, WatermarkOutput output) {
+        }
+
+        @Override
+        public void onPeriodicEmit(org.apache.flink.api.common.eventtime.WatermarkOutput output) {
+            Watermark next = this.wms.getCurrentWatermark();
+            if (next != null) {
+                Long emitWatermarkTimestamp = (autoWatermarkInterval != null && autoWatermarkInterval.longValue() != 0L && (System.currentTimeMillis() - next.getTimestamp() < autoWatermarkInterval)) ? next.getTimestamp() : System.currentTimeMillis();
+                output.emitWatermark(new org.apache.flink.api.common.eventtime.Watermark(emitWatermarkTimestamp));
+            }
+        }
     }
 }
