@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
- 
 
 package com.dtstack.flink.sql.watermarker;
 
@@ -25,7 +24,6 @@ import com.google.common.base.Strings;
 import org.apache.flink.api.common.eventtime.TimestampAssigner;
 import org.apache.flink.api.common.eventtime.TimestampAssignerSupplier;
 import org.apache.flink.api.common.eventtime.WatermarkGenerator;
-import org.apache.flink.api.common.eventtime.WatermarkGeneratorSupplier;
 import org.apache.flink.api.common.eventtime.WatermarkOutput;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -34,7 +32,6 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.runtime.operators.util.AssignerWithPeriodicWatermarksAdapter;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
 
@@ -46,16 +43,17 @@ import java.time.temporal.ChronoUnit;
  * define watermarker
  * Date: 2018/6/29
  * Company: www.dtstack.com
+ *
  * @author xuchao
  */
 
 public class WaterMarkerAssigner {
 
-    public boolean checkNeedAssignWaterMarker(AbstractSourceTableInfo tableInfo){
+    public boolean checkNeedAssignWaterMarker(AbstractSourceTableInfo tableInfo) {
         return !Strings.isNullOrEmpty(tableInfo.getEventTimeField());
     }
 
-    public DataStream assignWaterMarker(DataStream<Row> dataStream, RowTypeInfo typeInfo, AbstractSourceTableInfo sourceTableInfo){
+    public DataStream assignWaterMarker(DataStream<Row> dataStream, RowTypeInfo typeInfo, AbstractSourceTableInfo sourceTableInfo) {
 
         String eventTimeFieldName = sourceTableInfo.getEventTimeField();
 
@@ -64,13 +62,13 @@ public class WaterMarkerAssigner {
         String[] fieldNames = typeInfo.getFieldNames();
         TypeInformation<?>[] fieldTypes = typeInfo.getFieldTypes();
 
-        if(Strings.isNullOrEmpty(eventTimeFieldName)){
+        if (Strings.isNullOrEmpty(eventTimeFieldName)) {
             return dataStream;
         }
 
         int pos = -1;
-        for(int i=0; i<fieldNames.length; i++){
-            if(eventTimeFieldName.equals(fieldNames[i])){
+        for (int i = 0; i < fieldNames.length; i++) {
+            if (eventTimeFieldName.equals(fieldNames[i])) {
                 pos = i;
             }
         }
@@ -81,11 +79,11 @@ public class WaterMarkerAssigner {
         TypeInformation fieldType = fieldTypes[pos];
 
         AbstractCustomerWaterMarker waterMarker = null;
-        if(fieldType.getTypeClass().isAssignableFrom(Timestamp.class)){
+        if (fieldType.getTypeClass().isAssignableFrom(Timestamp.class)) {
             waterMarker = new CustomerWaterMarkerForTimeStamp(Time.milliseconds(maxOutOrderness), pos);
-        }else if(fieldType.getTypeClass().isAssignableFrom(Long.class)){
+        } else if (fieldType.getTypeClass().isAssignableFrom(Long.class)) {
             waterMarker = new CustomerWaterMarkerForLong(Time.milliseconds(maxOutOrderness), pos);
-        }else{
+        } else {
             throw new IllegalArgumentException("not support type of " + fieldType + ", current only support(timestamp, long).");
         }
 
@@ -93,6 +91,10 @@ public class WaterMarkerAssigner {
         waterMarker.setFromSourceTag(fromTag);
 
         Long autoWatermarkInterval = dataStream.getExecutionConfig().getAutoWatermarkInterval();
+        if (autoWatermarkInterval == null || autoWatermarkInterval.longValue() == 0L) {
+            autoWatermarkInterval = 10000L;
+        }
+
         WatermarkStrategy<Row> watermarkStrategy = new MyWatermarkStrategy<>(waterMarker, autoWatermarkInterval);
         watermarkStrategy.withIdleness(Duration.of(autoWatermarkInterval, ChronoUnit.MILLIS));
         return dataStream.assignTimestampsAndWatermarks(watermarkStrategy);
@@ -104,7 +106,7 @@ public class WaterMarkerAssigner {
         private final Long autoWatermarkInterval;
 
         public MyWatermarkStrategy(AssignerWithPeriodicWatermarks<T> wms, Long autoWatermarkInterval) {
-            this.wms = (AssignerWithPeriodicWatermarks)Preconditions.checkNotNull(wms);
+            this.wms = (AssignerWithPeriodicWatermarks) Preconditions.checkNotNull(wms);
             this.autoWatermarkInterval = autoWatermarkInterval;
         }
 
@@ -119,12 +121,12 @@ public class WaterMarkerAssigner {
         }
     }
 
-    public static class MyAssignerWithPeriodicWatermarksAdapter<T> implements WatermarkGenerator<T>{
+    public static class MyAssignerWithPeriodicWatermarksAdapter<T> implements WatermarkGenerator<T> {
         private final AssignerWithPeriodicWatermarks<T> wms;
         private final Long autoWatermarkInterval;
 
         public MyAssignerWithPeriodicWatermarksAdapter(AssignerWithPeriodicWatermarks<T> wms, Long autoWatermarkInterval) {
-            this.wms = (AssignerWithPeriodicWatermarks)Preconditions.checkNotNull(wms);
+            this.wms = (AssignerWithPeriodicWatermarks) Preconditions.checkNotNull(wms);
             this.autoWatermarkInterval = autoWatermarkInterval;
         }
 

@@ -20,10 +20,8 @@ package com.gotin.flink.sql.source.iceberg;
 
 import com.dtstack.flink.sql.source.IStreamSourceGener;
 import com.dtstack.flink.sql.table.AbstractSourceTableInfo;
-import com.dtstack.flink.sql.util.DataTypeUtils;
 import com.gotin.flink.sql.source.iceberg.table.IcebergTableInfo;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -104,14 +102,39 @@ public class IcebergSource implements IStreamSourceGener<Table> {
                 IntStream.range(0, fieldClasses.length)
                         .mapToObj(i -> {
                             if (fieldClasses[i].isArray()) {
-                                return DataTypes.RAW(DataTypeUtils.convertToArray(fieldTypes[i]));
+                                return DataTypes.ARRAY(getDataTypeFromClass(fieldClasses[i].getComponentType()));
                             }
-                            return DataTypes.RAW(TypeInformation.of(fieldClasses[i]));
+                            return getDataTypeFromClass(fieldClasses[i]);
                         })
                         .toArray(DataType[]::new);
+
         return TableSchema.builder()
                 .fields(icebergTableInfo.getFields(), types)
                 .build();
+    }
+
+    DataType getDataTypeFromClass(Class atomicCls) {
+        DataType dataType = null;
+        if (atomicCls.getSimpleName().toLowerCase().contains("string")) {
+            dataType = DataTypes.STRING();
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("int")) {
+            dataType = DataTypes.INT();
+        } else if (atomicCls.getSimpleName().contains("long")) {
+            dataType = DataTypes.BIGINT();
+        } else if (atomicCls.getSimpleName().contains("float")) {
+            dataType = DataTypes.FLOAT();
+        } else if (atomicCls.getSimpleName().contains("double")) {
+            dataType = DataTypes.DOUBLE();
+        } else if (atomicCls.getSimpleName().contains("boolean")) {
+            dataType = DataTypes.BOOLEAN();
+        } else if (atomicCls.getSimpleName().contains("byte[]")) {
+            dataType = DataTypes.BYTES();
+        } else if (atomicCls.getSimpleName().contains("timestamp")) {
+            dataType = DataTypes.TIMESTAMP();
+        } else if (atomicCls.getSimpleName().contains("date")) {
+            dataType = DataTypes.DATE();
+        }
+        return dataType;
     }
 
     public static class MyRowDataMapFunction implements MapFunction<RowData, Tuple2<Boolean, Row>> {

@@ -30,6 +30,7 @@ import org.apache.calcite.sql.SqlMatchRecognize;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlAsOperator;
+import org.apache.calcite.sql.SqlSnapshot;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.commons.lang3.StringUtils;
 import com.google.common.collect.Lists;
@@ -146,6 +147,11 @@ public class InsertSqlParser implements IParser {
                 SqlOrderBy sqlOrderBy  = (SqlOrderBy) sqlNode;
                 parseNode(sqlOrderBy.query, sqlParseResult);
                 break;
+            case SNAPSHOT:
+                SqlSnapshot sqlSnapshot = (SqlSnapshot) sqlNode;
+                if (sqlSnapshot.getTableRef().getKind() == IDENTIFIER) {
+                    sqlParseResult.addSourceTable(sqlSnapshot.getTableRef().toString());
+                }
             default:
                 //do nothing
                 break;

@@ -17,6 +17,7 @@
         <module>kafka</module>
         <module>promethus</module>
         <module>iceberg</module>
+        <module>druid-io</module>
         <module>mysql</module>
 <!--        <module>hbase</module>-->
 <!--        <module>elasticsearch5</module>-->
@@ -48,6 +49,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <flink.version>1.11.1</flink.version>
         <hadoop.version>2.7.3</hadoop.version>
+
+        <!--本地运行设置为compile、线上设置为provided-->
+        <devDependency.scope>provided</devDependency.scope>
     </properties>
 
     <build>

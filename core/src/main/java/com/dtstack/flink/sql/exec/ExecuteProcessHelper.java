@@ -288,30 +288,32 @@ public class ExecuteProcessHelper {
 
                 AbstractSourceTableInfo sourceTableInfo = (AbstractSourceTableInfo) tableInfo;
                 Table table = StreamSourceFactory.getStreamSource(sourceTableInfo, env, tableEnv, localSqlPluginPath, pluginLoadMode);
-                tableEnv.registerTable(sourceTableInfo.getAdaptName(), table);
-                //Note --- parameter conversion function can not be used inside a function of the type of polymerization
-                //Create table in which the function is arranged only need adaptation sql
-                String adaptSql = sourceTableInfo.getAdaptSelectSql();
-                Table adaptTable = adaptSql == null ? table : tableEnv.sqlQuery(adaptSql);
+                if (table != null) {
+                    tableEnv.registerTable(sourceTableInfo.getAdaptName(), table);
+                    //Note --- parameter conversion function can not be used inside a function of the type of polymerization
+                    //Create table in which the function is arranged only need adaptation sql
+                    String adaptSql = sourceTableInfo.getAdaptSelectSql();
+                    Table adaptTable = adaptSql == null ? table : tableEnv.sqlQuery(adaptSql);
 
-                RowTypeInfo typeInfo = new RowTypeInfo(adaptTable.getSchema().getFieldTypes(), adaptTable.getSchema().getFieldNames());
-                DataStream adaptStream = tableEnv.toAppendStream(adaptTable, typeInfo);
+                    RowTypeInfo typeInfo = new RowTypeInfo(adaptTable.getSchema().getFieldTypes(), adaptTable.getSchema().getFieldNames());
+                    DataStream adaptStream = tableEnv.toAppendStream(adaptTable, typeInfo);
 
-                String fields = String.join(",", typeInfo.getFieldNames());
+                    String fields = String.join(",", typeInfo.getFieldNames());
 
-                if (waterMarkerAssigner.checkNeedAssignWaterMarker(sourceTableInfo)) {
-                    adaptStream = waterMarkerAssigner.assignWaterMarker(adaptStream, typeInfo, sourceTableInfo);
-                    fields += ",ROWTIME.ROWTIME";
-                } else {
-                    fields += ",PROCTIME.PROCTIME";
+                    if (waterMarkerAssigner.checkNeedAssignWaterMarker(sourceTableInfo)) {
+                        adaptStream = waterMarkerAssigner.assignWaterMarker(adaptStream, typeInfo, sourceTableInfo);
+                        fields += ",ROWTIME.ROWTIME";
+                    } else {
+                        fields += ",PROCTIME.PROCTIME";
+                    }
+
+                    Table regTable = tableEnv.fromDataStream(adaptStream, fields);
+                    tableEnv.registerTable(tableInfo.getName(), regTable);
+                    if (LOG.isInfoEnabled()) {
+                        LOG.info("registe table {} success.", tableInfo.getName());
+                    }
+                    registerTableCache.put(tableInfo.getName(), regTable);
                 }
-
-                Table regTable = tableEnv.fromDataStream(adaptStream, fields);
-                tableEnv.registerTable(tableInfo.getName(), regTable);
-                if (LOG.isInfoEnabled()) {
-                    LOG.info("registe table {} success.", tableInfo.getName());
-                }
-                registerTableCache.put(tableInfo.getName(), regTable);
 
                 URL sourceTablePathUrl = PluginUtil.buildSourceAndSinkPathByLoadMode(tableInfo.getType(), AbstractSourceTableInfo.SOURCE_SUFFIX, localSqlPluginPath, remoteSqlPluginPath, pluginLoadMode);
                 pluginClassPathSets.add(sourceTablePathUrl);

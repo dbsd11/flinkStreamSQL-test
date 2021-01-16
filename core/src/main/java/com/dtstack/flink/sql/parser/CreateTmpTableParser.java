@@ -45,7 +45,7 @@ public class CreateTmpTableParser implements IParser {
     //select table tableName as select
     private static final String PATTERN_STR = "(?i)create\\s+view\\s+([^\\s]+)\\s+as\\s+select\\s+(.*)";
 
-    private static final String EMPTY_STR = "(?i)^\\screate\\s+view\\s+(\\S+)\\s*\\((.+)\\)$";
+    private static final String EMPTY_STR = "(?i)^\\s*create\\s+view\\s+(\\S+)\\s*\\((.+)\\)$";
 
     private static final Pattern NONEMPTYVIEW = Pattern.compile(PATTERN_STR);
 

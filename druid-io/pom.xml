@@ -10,25 +10,20 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.gotin.flink</groupId>
-    <artifactId>sql.iceberg</artifactId>
+    <artifactId>sql.druid-io</artifactId>
     <packaging>pom</packaging>
 
     <modules>
-        <module>iceberg-sink</module>
-        <module>iceberg-source</module>
+<!--        <module>druidio-sink</module>-->
+        <module>druidio-source</module>
     </modules>
 
     <properties>
-        <iceberg.version>0.10.0</iceberg.version>
+        <druidio.version>0.19.0</druidio.version>
     </properties>
 
     <dependencies>
-        <!--iceberg-->
-        <dependency>
-            <groupId>org.apache.iceberg</groupId>
-            <artifactId>iceberg-flink-runtime</artifactId>
-            <version>${iceberg.version}</version>
-        </dependency>
+        <!--druidio-->
 
         <dependency>
             <groupId>com.dtstack.flink</groupId>

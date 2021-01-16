@@ -1,7 +1,7 @@
 package com.gotin.flink.sql.source.iceberg.table;
 
+import com.dtstack.flink.sql.table.AbstractSourceParser;
 import com.dtstack.flink.sql.table.AbstractTableInfo;
-import com.dtstack.flink.sql.table.AbstractTableParser;
 import com.dtstack.flink.sql.util.MathUtil;
 
 import java.util.Map;
@@ -12,7 +12,7 @@ import static com.dtstack.flink.sql.table.AbstractTableInfo.PARALLELISM_KEY;
  * @Author: bison
  * @Date: 21/01/08
  */
-public class IcebergeSinkParser extends AbstractTableParser {
+public class IcebergeSourceParser extends AbstractSourceParser {
 
     public static final String WAREHOUSE_LOCATION_KEY = "warehouseLocation";
     public static final String ICEBERG_TABLE_NAME_KEY = "icebergTableName";
