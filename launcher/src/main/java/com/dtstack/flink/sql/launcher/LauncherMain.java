@@ -31,6 +31,7 @@ import com.dtstack.flink.sql.option.OptionParser;
 import com.dtstack.flink.sql.option.Options;
 import com.dtstack.flink.sql.util.PluginUtil;
 import org.apache.commons.io.Charsets;
+import org.apache.flink.connector.jdbc.dialect.JdbcDialect;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;

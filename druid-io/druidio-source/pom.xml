@@ -20,13 +20,7 @@
     </properties>
 
     <dependencies>
-        <!--Avatica(flink contains, no need to import)-->
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-jdbc_2.11</artifactId>
-            <version>${flink.version}</version>
-        </dependency>
+        <!--Avatica(使用core 中 avatica , no need to import)-->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>

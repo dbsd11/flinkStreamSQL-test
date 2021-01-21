@@ -52,14 +52,24 @@ public class DruidioSource implements IStreamSourceGener<Table> {
 
         String query = new String(Base64.getDecoder().decode(druidioTableInfo.getRawQuery()));
 
-        JdbcOptions jdbcOptions = JdbcOptions.builder()
-                .setDriverName(druidioTableInfo.getDriver())
-                .setDialect(new AvaticaJDBCDialect(query))
-                .setDBUrl(druidioTableInfo.getUrl())
-                .setUsername(druidioTableInfo.getUsername())
-                .setPassword(druidioTableInfo.getPassword())
-                .setTableName("empty")
-                .build();
+        //比较特殊 直接使用appClassLoader
+        ClassLoader dtClassLoader = Thread.currentThread().getContextClassLoader();
+        ClassLoader appClassLoader = dtClassLoader.getParent();
+        Thread.currentThread().setContextClassLoader(appClassLoader);
+
+        JdbcOptions jdbcOptions = null;
+        try {
+            jdbcOptions = JdbcOptions.builder()
+                    .setDriverName(druidioTableInfo.getDriver())
+                    .setDialect(new AvaticaJDBCDialect(query))
+                    .setDBUrl(druidioTableInfo.getUrl())
+                    .setUsername(druidioTableInfo.getUsername())
+                    .setPassword(druidioTableInfo.getPassword())
+                    .setTableName("empty")
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         JdbcReadOptions jdbcReadOptions = JdbcReadOptions.builder()
                 .setFetchSize(100)
@@ -82,6 +92,8 @@ public class DruidioSource implements IStreamSourceGener<Table> {
         env.setParallelism(sourceTableInfo.getParallelism());
 
         tableEnv.registerTableSource(sourceTableInfo.getName(), jdbcTableSource);
+
+        Thread.currentThread().setContextClassLoader(dtClassLoader);
         return null;
     }
 
@@ -109,19 +121,19 @@ public class DruidioSource implements IStreamSourceGener<Table> {
             dataType = DataTypes.STRING();
         } else if (atomicCls.getSimpleName().toLowerCase().contains("int")) {
             dataType = DataTypes.INT();
-        } else if (atomicCls.getSimpleName().contains("long")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("long")) {
             dataType = DataTypes.BIGINT();
-        } else if (atomicCls.getSimpleName().contains("float")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("float")) {
             dataType = DataTypes.FLOAT();
-        } else if (atomicCls.getSimpleName().contains("double")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("double")) {
             dataType = DataTypes.DOUBLE();
-        } else if (atomicCls.getSimpleName().contains("boolean")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("boolean")) {
             dataType = DataTypes.BOOLEAN();
-        } else if (atomicCls.getSimpleName().contains("byte[]")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("byte[]")) {
             dataType = DataTypes.BYTES();
-        } else if (atomicCls.getSimpleName().contains("timestamp")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("timestamp")) {
             dataType = DataTypes.TIMESTAMP();
-        } else if (atomicCls.getSimpleName().contains("date")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("date")) {
             dataType = DataTypes.DATE();
         }
         return dataType;

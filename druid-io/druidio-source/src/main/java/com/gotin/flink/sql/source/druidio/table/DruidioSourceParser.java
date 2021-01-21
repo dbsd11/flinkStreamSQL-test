@@ -3,7 +3,7 @@ package com.gotin.flink.sql.source.druidio.table;
 import com.dtstack.flink.sql.table.AbstractSourceParser;
 import com.dtstack.flink.sql.table.AbstractTableInfo;
 import com.dtstack.flink.sql.util.MathUtil;
-import org.apache.calcite.avatica.remote.Driver;
+import com.gotin.flink.sql.source.avatica.AvaticaJDBCDialect;
 
 import java.util.Map;
 
@@ -31,7 +31,7 @@ public class DruidioSourceParser extends AbstractSourceParser {
 
         druidioTableInfo.setParallelism(MathUtil.getIntegerVal(props.get(PARALLELISM_KEY.toLowerCase())));
         druidioTableInfo.setConnector(MathUtil.getString(props.getOrDefault(CONNECTOR_KEY, "jdbc")));
-        druidioTableInfo.setDriver(MathUtil.getString(props.getOrDefault(DRIVER_KEY, Driver.class.getName())));
+        druidioTableInfo.setDriver(MathUtil.getString(props.getOrDefault(DRIVER_KEY, AvaticaJDBCDialect.AVATICA_JDBC_DRIVER)));
         druidioTableInfo.setUrl(MathUtil.getString(props.get(URL_KEY)));
         druidioTableInfo.setUsername(MathUtil.getString(props.get(USERNAME_KEY)));
         druidioTableInfo.setPassword(MathUtil.getString(props.get(PASSWORD_KEY)));

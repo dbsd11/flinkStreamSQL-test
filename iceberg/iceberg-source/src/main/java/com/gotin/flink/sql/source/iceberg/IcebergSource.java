@@ -119,19 +119,19 @@ public class IcebergSource implements IStreamSourceGener<Table> {
             dataType = DataTypes.STRING();
         } else if (atomicCls.getSimpleName().toLowerCase().contains("int")) {
             dataType = DataTypes.INT();
-        } else if (atomicCls.getSimpleName().contains("long")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("long")) {
             dataType = DataTypes.BIGINT();
-        } else if (atomicCls.getSimpleName().contains("float")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("float")) {
             dataType = DataTypes.FLOAT();
-        } else if (atomicCls.getSimpleName().contains("double")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("double")) {
             dataType = DataTypes.DOUBLE();
-        } else if (atomicCls.getSimpleName().contains("boolean")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("boolean")) {
             dataType = DataTypes.BOOLEAN();
-        } else if (atomicCls.getSimpleName().contains("byte[]")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("byte[]")) {
             dataType = DataTypes.BYTES();
-        } else if (atomicCls.getSimpleName().contains("timestamp")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("timestamp")) {
             dataType = DataTypes.TIMESTAMP();
-        } else if (atomicCls.getSimpleName().contains("date")) {
+        } else if (atomicCls.getSimpleName().toLowerCase().contains("date")) {
             dataType = DataTypes.DATE();
         }
         return dataType;
