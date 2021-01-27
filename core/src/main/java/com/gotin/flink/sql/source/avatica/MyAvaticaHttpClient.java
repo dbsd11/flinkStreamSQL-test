@@ -1,6 +1,8 @@
 package com.gotin.flink.sql.source.avatica;
 
+import com.gotin.flink.sql.source.avatica.aggregation.Aggregator;
 import com.gotin.flink.sql.source.avatica.aggregation.GroupConcatAggregator;
+import com.gotin.flink.sql.source.avatica.aggregation.GroupConcatJsonAggregator;
 import org.apache.calcite.avatica.Meta;
 import org.apache.calcite.avatica.remote.AvaticaCommonsHttpClientImpl;
 import org.apache.calcite.avatica.remote.Service;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -64,19 +67,17 @@ public class MyAvaticaHttpClient extends AvaticaCommonsHttpClientImpl {
                         return rowTuple;
                     }).collect(Collectors.toList()));
 
-                    List<List> newRowList = null;
                     JsonNode aggregatorJson = avatiaObjectMapper.readTree(sqlCommentInfo.replaceAll("-", "").trim());
                     String aggregatorCls = aggregatorJson.get("class").asText();
-                    if (GroupConcatAggregator.class.getName().equalsIgnoreCase(aggregatorCls)) {
-                        GroupConcatAggregator groupConcatAggregator = new GroupConcatAggregator(aggregatorJson.get("concatField").asText());
-                        newRowList = groupConcatAggregator.aggregation(tupleList.stream()).skip(1).map(tuple -> {
-                            List row = new ArrayList(tuple.getArity());
-                            for (int i = 0; i < tuple.getArity(); i++) {
-                                row.add(tuple.getField(i));
-                            }
-                            return row;
-                        }).collect(Collectors.toList());
-                    }
+                    Aggregator aggregator = aggregatorCls.contains("GroupConcatAggregator") ? new GroupConcatAggregator(aggregatorJson.get("concatField").asText()) :
+                            aggregatorCls.contains("GroupConcatJsonAggregator") ? new GroupConcatJsonAggregator(aggregatorJson.get("concatField").asText(), aggregatorJson.get("jsonKey").asText()) : null;
+                    List<List> newRowList = aggregator == null ? Collections.emptyList() : aggregator.aggregation(tupleList.stream()).skip(1).map(tuple -> {
+                        List row = new ArrayList(tuple.getArity());
+                        for (int i = 0; i < tuple.getArity(); i++) {
+                            row.add(tuple.getField(i));
+                        }
+                        return row;
+                    }).collect(Collectors.toList());
 
                     if (CollectionUtils.isNotEmpty(newRowList)) {
                         Field rowsField = Meta.Frame.class.getDeclaredField("rows");
