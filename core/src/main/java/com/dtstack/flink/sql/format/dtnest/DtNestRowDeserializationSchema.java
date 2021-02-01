@@ -122,7 +122,6 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
         } else {
             while (iterator.hasNext()) {
                 String next = iterator.next();
-                next = (next.startsWith("`") && next.endsWith("`")) ? next.substring(1, next.length() - 1) : next;
                 JsonNode child = jsonNode.get(next);
                 String nodeKey = getNodeKey(prefix, next);
 
@@ -138,6 +137,9 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
 
     private JsonNode getIgnoreCase(String key) {
         String nodeMappingKey = rowAndFieldMapping.getOrDefault(key, key);
+        if (nodeMappingKey.startsWith("`") && nodeMappingKey.endsWith("`")) {
+            nodeMappingKey = nodeMappingKey.substring(1, nodeMappingKey.length() - 1);
+        }
         return nodeAndJsonNodeMapping.get(nodeMappingKey);
     }
 
