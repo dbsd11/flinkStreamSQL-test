@@ -198,7 +198,7 @@ public class DTJsonRowDeserializationSchema implements DeserializationSchema<Row
 
 		final Row row = new Row(names.length);
 		for (int i = 0; i < names.length; i++) {
-			final String name = names[i];
+			final String name = (names[i].startsWith("`") && names[i].endsWith("`")) ? names[i].substring(1, names[i].length() - 1) : names[i];
 			final JsonNode subNode = node.get(name);
 			if (subNode == null) {
 				if (failOnMissingField) {
