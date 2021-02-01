@@ -23,7 +23,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
-import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.typeutils.ObjectArrayTypeInfo;
@@ -43,11 +42,7 @@ import java.lang.reflect.Array;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -114,7 +109,7 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
         Iterator<String> iterator = jsonNode.fieldNames();
 
         if (!iterator.hasNext()) {
-            boolean needParseJsonStr = StringUtils.isEmpty("prefix") ? false : this.rowAndFieldMapping.values().stream().anyMatch(fromRowField -> fromRowField.startsWith(prefix) && !fromRowField.endsWith(prefix) && fromRowField.substring(prefix.length()).contains("."));
+            boolean needParseJsonStr = StringUtils.isEmpty(prefix) ? false : this.rowAndFieldMapping.values().stream().anyMatch(fromRowField -> fromRowField.startsWith(prefix) && !fromRowField.endsWith(prefix) && fromRowField.substring(prefix.length()).contains("."));
             if (needParseJsonStr) {
                 try {
                     jsonNode = objectMapper.readTree(jsonNode.asText().trim());
@@ -127,6 +122,7 @@ public class DtNestRowDeserializationSchema extends AbstractDeserializationSchem
         } else {
             while (iterator.hasNext()) {
                 String next = iterator.next();
+                next = (next.startsWith("`") && next.endsWith("`")) ? next.substring(1, next.length() - 1) : next;
                 JsonNode child = jsonNode.get(next);
                 String nodeKey = getNodeKey(prefix, next);
 
