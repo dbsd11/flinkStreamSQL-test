@@ -12,6 +12,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -23,6 +25,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MyAvaticaHttpClient extends AvaticaCommonsHttpClientImpl {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MyAvaticaHttpClient.class);
 
     //这个ObjectMapper比较特殊，必须得使用flink集成的
     private ObjectMapper avatiaObjectMapper = new ObjectMapper();
@@ -90,7 +94,7 @@ public class MyAvaticaHttpClient extends AvaticaCommonsHttpClientImpl {
             }
 
         } catch (Exception e) {
-            System.out.println("MyAvaticaHttpClient send optimize failed, return origin response");
+            LOG.warn("MyAvaticaHttpClient send optimize failed, return origin response", e);
         }
 
         return response;

@@ -15,10 +15,8 @@ public class AvaticaTest {
 
         String url = "jdbc:avatica:remote:url=https://router.druid.t.gotin.online/druid/v2/sql/avatica/;httpclient_impl=com.gotin.flink.sql.source.avatica.MyAvaticaHttpClient;authentication=BASIC;avatica_user=yoda;avatica_password=Youda";
         Properties connectionProperties = new Properties();
-        String query = "-- {\"class\":\"com.gotin.flink.sql.source.avatica.aggregation.GroupConcatJsonAggregator\", \"concatField\":\"actionInfos\", \"jsonKey\":\"action\"} --\n" +
-                "select \"`userId`\" as userId, STRING_FORMAT('{\"eventId\":\"%s\",\"action\":\"%s\", \"count\":\"%s\"}',\"`eventId`\", \"`action`\", count(1)) as actionInfos from \"mid-eventUserAction\" where __time > CURRENT_DATE and \"`userId`\"='bitdbsd11@163.com' group by \"`userId`\",\"`eventId`\",\"`action`\"\n" +
-                "\n" +
-                "\n";
+        String query = "-- {\"class\":\"com.gotin.flink.sql.source.avatica.aggregation.GroupConcatJsonAggregator\", \"concatField\":\"pvInfos\", \"jsonKey\":\"key\"} --\n" +
+                "select \"`userId`\" as userId, STRING_FORMAT('{\"eventId\":\"%s\",\"page\":\"%s\", \"count\":\"%s\", \"key\":\"%s\"}',\"`eventId`\", \"`jsonObj_t`.p\", count(1), CONCAT(\"`eventId`\",'+',\"`jsonObj_t`.p\")) as pvInfos from \"mid-growingioSdkData\" where __time > CURRENT_DATE and \"`userId`\"='bitdbsd11@163.com' and \"`e`\"='\"pv\"' group by \"`userId`\",\"`eventId`\",\"`jsonObj_t`.p\"";
         try (Connection connection = DriverManager.getConnection(url, connectionProperties)) {
             try (
                     final Statement statement = connection.createStatement();
