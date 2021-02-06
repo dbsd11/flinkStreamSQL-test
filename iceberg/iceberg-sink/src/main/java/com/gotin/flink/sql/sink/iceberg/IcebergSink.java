@@ -18,14 +18,19 @@ import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.sinks.RetractStreamTableSink;
 import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.types.Row;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.flink.CatalogLoader;
 import org.apache.iceberg.flink.FlinkCatalogFactory;
 import org.apache.iceberg.flink.FlinkSchemaUtil;
 import org.apache.iceberg.flink.TableLoader;
 import org.apache.iceberg.flink.sink.FlinkSink;
 import org.apache.iceberg.hadoop.HadoopCatalog;
+import org.apache.iceberg.nessie.NessieCatalog;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -52,6 +57,55 @@ public class IcebergSink implements RetractStreamTableSink<Row>, IStreamSinkGene
     @Override
     public DataStreamSink<?> consumeDataStream(DataStream<Tuple2<Boolean, Row>> dataStream) {
         //确保table存在，没有则新建
+        try (NessieCatalog nessieCatalog = new NessieCatalog()) {
+            Configuration hadoopConfig = FlinkCatalogFactory.clusterHadoopConf();
+            nessieCatalog.setConf(hadoopConfig);
+
+            Map<String, String> options = new HashMap<>();
+            options.put("url", "http://39.104.60.181:19120/");
+            options.put("ref", "default");
+            options.put("warehouse", icebergTableInfo.getWarehouseLocation());
+            nessieCatalog.initialize(icebergTableInfo.getIcebergTableName(), options);
+
+            final AtomicReference<String> icebergeNamespaceRef = new AtomicReference<>();
+            final AtomicReference<String> icebergeTableRef = new AtomicReference<>(icebergTableInfo.getIcebergTableName());
+            if (icebergeTableRef.get().contains("`.")) {
+                icebergeNamespaceRef.set(icebergeTableRef.get().substring(1, icebergeTableRef.get().lastIndexOf("`")));
+                icebergeTableRef.set(icebergeTableRef.get().substring(icebergeTableRef.get().lastIndexOf("`") + 1));
+            } else {
+                icebergeNamespaceRef.set("common");
+            }
+
+            boolean namespaceExists = nessieCatalog.listNamespaces().stream().anyMatch(namespace -> namespace.toString().equals(icebergeNamespaceRef.get()));
+            if (!namespaceExists) {
+                nessieCatalog.createNamespace(Namespace.of(icebergeNamespaceRef.get()));
+            }
+            boolean tableExists = nessieCatalog.listTables(Namespace.of(icebergeNamespaceRef.get())).stream().anyMatch(tableIdentifier -> tableIdentifier.name().equals(icebergeTableRef.get()));
+            if (!tableExists) {
+                nessieCatalog.createTable(TableIdentifier.of(icebergeNamespaceRef.get(), icebergeTableRef.get()), FlinkSchemaUtil.convert(getTableSchema()));
+            }
+            nessieCatalog.loadTable(TableIdentifier.of(icebergeNamespaceRef.get(), icebergeTableRef.get()))
+                    .updateProperties()
+                    .set("write.format.default", icebergTableInfo.getWriteFormat())
+                    .set("write.target-file-size-bytes", String.valueOf(icebergTableInfo.getWriteDataFileBatch()))
+                    .set("write.parquet.row-group-size-bytes", String.valueOf(icebergTableInfo.getWriteDataFileBatch()))
+                    .set("write.parquet.page-size-bytes", String.valueOf(icebergTableInfo.getWriteDataFileBatch()))
+                    .set("write.parquet.dict-size-bytes", String.valueOf(icebergTableInfo.getWriteDataFileBatch()))
+                    .commit();
+
+            DataStream<RowData> rowDataStream = dataStream.map(new MyRowDataMapFunction());
+            DataStreamSink<RowData> dataStreamSink = FlinkSink.forRowData(rowDataStream)
+                    .tableLoader(TableLoader.fromCatalog(CatalogLoader.custom(icebergTableInfo.getIcebergTableName(), options, hadoopConfig, NessieCatalog.class.getName()), TableIdentifier.of(icebergeNamespaceRef.get(), icebergeTableRef.get())))
+                    .writeParallelism(icebergTableInfo.getParallelism())
+                    .overwrite(false)
+                    .build();
+            RichSinkFunction richSinkFunction = new OutputFormatSinkFunction(new IcebergOutputFormat(icebergTableInfo, fieldNames, fieldTypes));
+            dataStream.addSink(richSinkFunction);
+            if (1 > 0) {
+                return dataStreamSink;
+            }
+        }
+
         try (HadoopCatalog catalog = new HadoopCatalog(FlinkCatalogFactory.clusterHadoopConf(), icebergTableInfo.getWarehouseLocation())) {
             final AtomicReference<String> icebergeNamespaceRef = new AtomicReference<>();
             final AtomicReference<String> icebergeTableRef = new AtomicReference<>(icebergTableInfo.getIcebergTableName());

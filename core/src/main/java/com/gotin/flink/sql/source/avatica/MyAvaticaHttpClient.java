@@ -50,7 +50,9 @@ public class MyAvaticaHttpClient extends AvaticaCommonsHttpClientImpl {
 
                 byte[] newStatementRequest = avatiaObjectMapper.writeValueAsBytes(executeRequest);
                 response = super.send(newStatementRequest);
-            } else if ((resp instanceof Service.ExecuteResponse) && CollectionUtils.isNotEmpty(((Service.ExecuteResponse) resp).results)) {
+                resp = avatiaObjectMapper.readValue(response, Service.Response.class);
+            }
+            if ((resp instanceof Service.ExecuteResponse) && CollectionUtils.isNotEmpty(((Service.ExecuteResponse) resp).results)) {
                 String executeSql = ((Service.ExecuteResponse) resp).results.get(0).signature.sql;
                 String sqlCommentInfo = executeSql.startsWith("--") ? executeSql.substring(0, executeSql.lastIndexOf("--")) : null;
                 if (StringUtils.isNotEmpty(sqlCommentInfo) && sqlCommentInfo.toLowerCase().contains("aggregator")) {

@@ -23,7 +23,7 @@ import java.util.Iterator;
 public class Test01 {
 
     public static void main(String[] args) throws Exception {
-        HadoopCatalog catalog = new HadoopCatalog(FlinkCatalogFactory.clusterHadoopConf(), "oss://gotin-flink-test/iceberg/warehouse");
+        HadoopCatalog catalog = new HadoopCatalog(FlinkCatalogFactory.clusterHadoopConf(), "oss://group-bison/test-iceberg/warehouse");
         boolean namespaceExists = catalog.listNamespaces().stream().anyMatch(namespace -> namespace.toString().equals("test"));
         if (!namespaceExists) {
             catalog.createNamespace(Namespace.of("test"));
@@ -55,7 +55,7 @@ public class Test01 {
 
         DataStream<RowData> input = writeEnv.fromCollection(new MyRowDataIterator(), RowData.class);
         FlinkSink.forRowData(input)
-                .tableLoader(TableLoader.fromHadoopTable("oss://gotin-flink-test/iceberg/warehouse/test/test01"))
+                .tableLoader(TableLoader.fromHadoopTable("oss://group-bison/test-iceberg/warehouse/test/test01"))
                 .overwrite(false)
                 .build();
         writeEnv.execute("Test Write Iceberg DataStream");

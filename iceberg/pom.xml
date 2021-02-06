@@ -19,7 +19,7 @@
     </modules>
 
     <properties>
-        <iceberg.version>0.10.0</iceberg.version>
+        <iceberg.version>0.11.0</iceberg.version>
     </properties>
 
     <dependencies>
