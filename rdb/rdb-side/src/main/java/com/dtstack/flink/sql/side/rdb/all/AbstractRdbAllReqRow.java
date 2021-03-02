@@ -121,7 +121,7 @@ public abstract class AbstractRdbAllReqRow extends BaseAllReqRow {
             Row row = fillData(value, null);
             RowDataComplete.collectRow(out, row);
         } else if (!CollectionUtils.isEmpty(cacheList)) {
-            cacheList.stream().forEach(one -> out.collect(RowDataConvert.convertToBaseRow(fillData(value, one))));
+            cacheList.stream().forEach(one -> RowDataComplete.collectRow(out, fillData(value, one)));
         }
     }
 

@@ -20,14 +20,16 @@
 package com.dtstack.flink.sql.side.operator;
 
 import com.dtstack.flink.sql.classloader.ClassLoaderManager;
+import com.dtstack.flink.sql.side.AbstractSideTableInfo;
 import com.dtstack.flink.sql.side.BaseAsyncReqRow;
 import com.dtstack.flink.sql.side.FieldInfo;
 import com.dtstack.flink.sql.side.JoinInfo;
-import com.dtstack.flink.sql.side.AbstractSideTableInfo;
 import com.dtstack.flink.sql.util.PluginUtil;
+import com.dtstack.flink.sql.util.RowDataConvert;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.streaming.api.datastream.AsyncDataStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.table.data.GenericRowData;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +39,7 @@ import java.util.concurrent.TimeUnit;
  * get data from  External data source with async operator
  * Date: 2018/9/18
  * Company: www.dtstack.com
+ *
  * @author xuchao
  */
 
@@ -60,17 +63,17 @@ public class SideAsyncOperator {
                         .newInstance(rowTypeInfo, joinInfo, outFieldInfoList, sideTableInfo));
     }
 
-    public static DataStream getSideJoinDataStream(DataStream inputStream, String sideType, String sqlRootDir, RowTypeInfo rowTypeInfo,  JoinInfo joinInfo,
-                                            List<FieldInfo> outFieldInfoList, AbstractSideTableInfo sideTableInfo, String pluginLoadMode) throws Exception {
+    public static DataStream getSideJoinDataStream(DataStream inputStream, String sideType, String sqlRootDir, RowTypeInfo rowTypeInfo, JoinInfo joinInfo,
+                                                   List<FieldInfo> outFieldInfoList, AbstractSideTableInfo sideTableInfo, String pluginLoadMode) throws Exception {
         BaseAsyncReqRow asyncDbReq = loadAsyncReq(sideType, sqlRootDir, rowTypeInfo, joinInfo, outFieldInfoList, sideTableInfo, pluginLoadMode);
 
         //TODO How much should be set for the degree of parallelism? Timeout? capacity settings?
-        if (ORDERED.equals(sideTableInfo.getCacheMode())){
+        if (ORDERED.equals(sideTableInfo.getCacheMode())) {
             return AsyncDataStream.orderedWait(inputStream, asyncDbReq, -1, TimeUnit.MILLISECONDS, sideTableInfo.getAsyncCapacity())
-                    .setParallelism(sideTableInfo.getParallelism());
-        }else {
+                    .setParallelism(sideTableInfo.getParallelism()).map(rowData -> rowData instanceof GenericRowData ? RowDataConvert.convertToRow((GenericRowData) rowData) : rowData);
+        } else {
             return AsyncDataStream.unorderedWait(inputStream, asyncDbReq, -1, TimeUnit.MILLISECONDS, sideTableInfo.getAsyncCapacity())
-                    .setParallelism(sideTableInfo.getParallelism());
+                    .setParallelism(sideTableInfo.getParallelism()).map(rowData -> rowData instanceof GenericRowData ? RowDataConvert.convertToRow((GenericRowData) rowData) : rowData);
         }
 
     }

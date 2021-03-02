@@ -20,13 +20,15 @@
 package com.dtstack.flink.sql.side.operator;
 
 import com.dtstack.flink.sql.classloader.ClassLoaderManager;
+import com.dtstack.flink.sql.side.AbstractSideTableInfo;
 import com.dtstack.flink.sql.side.BaseAllReqRow;
 import com.dtstack.flink.sql.side.FieldInfo;
 import com.dtstack.flink.sql.side.JoinInfo;
-import com.dtstack.flink.sql.side.AbstractSideTableInfo;
 import com.dtstack.flink.sql.util.PluginUtil;
+import com.dtstack.flink.sql.util.RowDataConvert;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.table.data.GenericRowData;
 
 import java.util.List;
 
@@ -60,6 +62,6 @@ public class SideWithAllCacheOperator {
     public static DataStream getSideJoinDataStream(DataStream inputStream, String sideType, String sqlRootDir, RowTypeInfo rowTypeInfo, JoinInfo joinInfo,
                                                    List<FieldInfo> outFieldInfoList, AbstractSideTableInfo sideTableInfo, String pluginLoadMode) throws Exception {
         BaseAllReqRow allReqRow = loadFlatMap(sideType, sqlRootDir, rowTypeInfo, joinInfo, outFieldInfoList, sideTableInfo, pluginLoadMode);
-        return inputStream.flatMap(allReqRow);
+        return inputStream.flatMap(allReqRow).map(rowData -> rowData instanceof GenericRowData ? RowDataConvert.convertToRow((GenericRowData) rowData) : rowData);
     }
 }
