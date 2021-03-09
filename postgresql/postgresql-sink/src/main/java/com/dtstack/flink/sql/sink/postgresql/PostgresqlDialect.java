@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 /**
  * Date: 2020/1/3
  * Company: www.dtstack.com
+ *
  * @author maqi
  */
 public class PostgresqlDialect implements JDBCDialect {
@@ -47,15 +48,28 @@ public class PostgresqlDialect implements JDBCDialect {
                 .map(this::quoteIdentifier)
                 .collect(Collectors.joining(", "));
 
-        String updateClause = Arrays.stream(fieldNames)
-                .map(f -> quoteIdentifier(f) + "=EXCLUDED." + quoteIdentifier(f))
-                .collect(Collectors.joining(", "));
+        String updateClause = null;
+        if (allReplace) {
+            updateClause = Arrays.stream(fieldNames)
+                    .map(f -> quoteIdentifier(f) + "=EXCLUDED." + quoteIdentifier(f))
+                    .collect(Collectors.joining(", "));
+        } else {
+            updateClause = Arrays.stream(fieldNames)
+                    .map(f -> isJsonIncrementField(f) ? (quoteIdentifier(f) + "=" + tableName + "." + quoteIdentifier(f) + "||EXCLUDED." + quoteIdentifier(f)) :
+                            (quoteIdentifier(f) + "=COALESCE(EXCLUDED." + quoteIdentifier(f) + "," + tableName + "." + quoteIdentifier(f) + ")"))
+                    .collect(Collectors.joining(", "));
+        }
+
 
         return Optional.of(getInsertIntoStatement(schema, tableName, fieldNames, null) +
                 " ON CONFLICT (" + uniqueColumns + ")" +
                 " DO UPDATE SET " + updateClause
         );
 
+    }
+
+    boolean isJsonIncrementField(String fieldName) {
+        return fieldName.toLowerCase().contains("jsonobj_") || fieldName.toLowerCase().contains("jsonarray_");
     }
 
 }
