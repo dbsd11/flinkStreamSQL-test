@@ -46,6 +46,8 @@ public class KafkaTopic2PgTableTool {
     private static String username = System.getenv("pgUsername");
     private static String password = System.getenv("pgPassword");
 
+    private static String sampleApiUrl = System.getenv("sampleApiUrl");
+
     public static void main(String[] args) throws Exception {
         //获取kafka topic以及表结构信息
         Map<String, Map<String, ColumnType>> topicFieldsMap = fetchKafkaTopicFieldsInfo();
@@ -77,7 +79,7 @@ public class KafkaTopic2PgTableTool {
     static Map<String, Map<String, ColumnType>> fetchKafkaTopicFieldsInfo() throws Exception {
         Map<String, Map<String, ColumnType>> topicFieldsMap = new HashMap<>();
 
-        String sampleApiUrl = "https://router.druid.t.gotin.online/druid/indexer/v1/sampler?for=parser";
+        String sampleApiUrl = "";
         String sampleKafkaFieldParamStr = "{\"type\":\"kafka\",\"spec\":{\"ioConfig\":{\"type\":\"kafka\",\"consumerProperties\":{\"bootstrap.servers\":\"%s\"},\"topic\":\"%s\",\"inputFormat\":{\"type\":\"json\",\"keepNullColumns\":true},\"useEarliestOffset\":true},\"dataSchema\":{\"dataSource\":\"sample\",\"timestampSpec\":{\"column\":\"!!!_no_such_column_!!!\",\"missingValue\":\"1970-01-01T00:00:00Z\"},\"dimensionsSpec\":{}},\"type\":\"kafka\",\"tuningConfig\":{\"type\":\"kafka\"}},\"samplerConfig\":{\"numRows\":500,\"timeoutMs\":15000}}";
         for (String topic : kafkaTopics) {
             if (kafkaIgnoreTopics.contains(topic)) {
@@ -267,7 +269,7 @@ public class KafkaTopic2PgTableTool {
 
             connection.setRequestProperty("Content-Type", "application/json;charset=utf-8");
 
-            connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString("yoda:Youda".getBytes()));
+            connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString("".getBytes()));
 
             //拼装参数
 
