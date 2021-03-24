@@ -135,7 +135,7 @@ public class KafkaTopic2PgTableTool {
             String jobTopic = topicFieldsEntry.getKey();
             String jobBootstrapServers = kafkaBootstrapServers;
             String jobClientId = RandomStringUtils.random(10, "abcdefg1234567890");
-            String jobJdbcUrl = jdbcUrl;
+            String jobJdbcUrl = "jdbc:" + jdbcUrl;
             String jobTable = String.format("%s.%s", schema, topicFieldsEntry.getKey().toLowerCase());
             String jobUsername = username;
             String jobPassword = password;
