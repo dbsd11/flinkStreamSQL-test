@@ -81,7 +81,6 @@ public class KafkaTopic2PgTableTool {
     static Map<String, Map<String, ColumnType>> fetchKafkaTopicFieldsInfo() throws Exception {
         Map<String, Map<String, ColumnType>> topicFieldsMap = new HashMap<>();
 
-        String sampleApiUrl = "";
         String sampleKafkaFieldParamStr = "{\"type\":\"kafka\",\"spec\":{\"ioConfig\":{\"type\":\"kafka\",\"consumerProperties\":{\"bootstrap.servers\":\"%s\"},\"topic\":\"%s\",\"inputFormat\":{\"type\":\"json\",\"keepNullColumns\":true},\"useEarliestOffset\":true},\"dataSchema\":{\"dataSource\":\"sample\",\"timestampSpec\":{\"column\":\"!!!_no_such_column_!!!\",\"missingValue\":\"1970-01-01T00:00:00Z\"},\"dimensionsSpec\":{}},\"type\":\"kafka\",\"tuningConfig\":{\"type\":\"kafka\"}},\"samplerConfig\":{\"numRows\":500,\"timeoutMs\":15000}}";
         for (String topic : kafkaTopics) {
             if (kafkaIgnoreTopics.contains(topic)) {
