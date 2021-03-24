@@ -2,6 +2,7 @@ import com.dtstack.flink.sql.enums.ColumnType;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.commons.lang.RandomStringUtils;
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.util.HostSpec;
 
@@ -20,6 +21,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -53,16 +55,16 @@ public class KafkaTopic2PgTableTool {
         Map<String, Map<String, ColumnType>> topicFieldsMap = fetchKafkaTopicFieldsInfo();
 
         //生成PgTable
-        URL jdbcURL = new URL(jdbcUrl);
-        PgConnection pgConnection = new PgConnection(new HostSpec[]{new HostSpec(jdbcURL.getHost(), jdbcURL.getPort())}, username, database, new Properties() {{
+        URI jdbcURI = new URI(jdbcUrl);
+        PgConnection pgConnection = new PgConnection(new HostSpec[]{new HostSpec(jdbcURI.getHost(), jdbcURI.getPort())}, username, database, new Properties() {{
             put("password", password);
-        }}, jdbcUrl);
+        }}, "jdbc:" + jdbcUrl);
         for (Map.Entry<String, Map<String, ColumnType>> topicFieldsEntry : topicFieldsMap.entrySet()) {
             createKafkaTopicPgTable(pgConnection, topicFieldsEntry.getKey(), topicFieldsEntry.getValue());
         }
 
         //生成flinkx同步任务, 一个topic对于一个job
-        String writeFlinxJobContentFilePath = "./.flinkxJobContent";
+        String writeFlinxJobContentFilePath = "./.yoda/flinkxJobContent";
         topicFieldsMap.entrySet().forEach(entry -> {
             String topicJobStr = buildFlinxJobContent(Collections.singletonMap(entry.getKey(), entry.getValue()));
             System.out.println("write topicJobStr to: " + (writeFlinxJobContentFilePath + "/" + entry.getKey() + ".json"));
@@ -133,13 +135,14 @@ public class KafkaTopic2PgTableTool {
         String flinkxJobContentStr = topicFieldsMap.entrySet().stream().map(topicFieldsEntry -> {
             String jobTopic = topicFieldsEntry.getKey();
             String jobBootstrapServers = kafkaBootstrapServers;
+            String jobClientId = RandomStringUtils.random(10, "abcdefg1234567890");
             String jobJdbcUrl = jdbcUrl;
             String jobTable = String.format("%s.%s", schema, topicFieldsEntry.getKey().toLowerCase());
             String jobUsername = username;
             String jobPassword = password;
             String jobColumn = topicFieldsEntry.getValue().entrySet().stream().map(topicField -> String.format("{\"name\":\"%s\", \"topic\":\"%s\"}", topicField.getKey(), topicField.getValue().name())).collect(Collectors.joining(","));
             String jobWriteMode = topicFieldsEntry.getValue().containsKey("id") ? "update" : "insert";
-            String[] jobArgs = new String[]{jobTopic, jobBootstrapServers, jobJdbcUrl, jobTable, jobUsername, jobPassword, jobColumn, jobWriteMode};
+            String[] jobArgs = new String[]{jobTopic, jobBootstrapServers, jobClientId, jobJdbcUrl, jobTable, jobUsername, jobPassword, jobColumn, jobWriteMode};
 
             String topicJobContentStr = "{\n" +
                     "\t\"reader\": {\n" +
@@ -153,7 +156,8 @@ public class KafkaTopic2PgTableTool {
                     "\t\t\t\t\"bootstrap.servers\": \"%s\",\n" +
                     "\t\t\t\t\"group.id\": \"data_pipeline\",\n" +
                     "\t\t\t\t\"enable.auto.commit\": \"true\",\n" +
-                    "\t\t\t\t\"auto.commit.interval.ms\": \"1000\"\n" +
+                    "\t\t\t\t\"auto.commit.interval.ms\": \"1000\",\n" +
+                    "\t\t\t\t\"client.id\": \"%s\"\n" +
                     "\t\t\t}\n" +
                     "\t\t},\n" +
                     "\t\t\"name\": \"kafkareader\"\n" +
