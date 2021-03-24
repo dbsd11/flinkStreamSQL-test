@@ -26,6 +26,7 @@ import java.net.URL;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,6 +50,8 @@ public class KafkaTopic2PgTableTool {
     private static String password = System.getenv("pgPassword");
 
     private static String sampleApiUrl = System.getenv("sampleApiUrl");
+
+    private static Set<String> jsonCols = new HashSet<>(Arrays.asList("tags", "properties"));
 
     public static void main(String[] args) throws Exception {
         //获取kafka topic以及表结构信息
@@ -108,6 +111,10 @@ public class KafkaTopic2PgTableTool {
                 }
                 topicFieldsMap.get(topic).put(entry.getKey(), entry.getValue().isJsonPrimitive() ? entry.getValue().getAsJsonPrimitive().isNumber() ? ColumnType.BIGINT : entry.getValue().getAsJsonPrimitive().isBoolean() ? ColumnType.INT : ColumnType.VARCHAR : ColumnType.VARCHAR);
             }
+
+            for (String jsonCol : jsonCols) {
+                topicFieldsMap.get(topic).put(jsonCol, ColumnType.VARCHAR);
+            }
         }
 
         return topicFieldsMap;
@@ -117,8 +124,7 @@ public class KafkaTopic2PgTableTool {
         StringBuilder createTableSqlSb = new StringBuilder();
         createTableSqlSb.append(String.format("CREATE TABLE IF NOT EXISTS \"%s\".\"%s\" (", schema, tableName.toLowerCase()));
 
-
-        String createTableFieldSql = tableFieldsMap.entrySet().stream().map(entry -> String.join(" ", getCleanDbColumnName(entry.getKey()), entry.getValue().name())).collect(Collectors.joining(","));
+        String createTableFieldSql = tableFieldsMap.entrySet().stream().map(entry -> String.join(" ", getCleanDbColumnName(entry.getKey()), jsonCols.contains(entry.getKey()) ? "JSONB" : entry.getValue().name())).collect(Collectors.joining(","));
         createTableSqlSb.append(createTableFieldSql);
 
         if (tableFieldsMap.containsKey("id")) {
@@ -147,6 +153,7 @@ public class KafkaTopic2PgTableTool {
                     "\t\"reader\": {\n" +
                     "\t\t\"parameter\": {\n" +
                     "\t\t\t\"topic\": \"%s\",\n" +
+                    "\t\t\t\"groupId\": \"data_pipeline\",\n" +
                     "\t\t\t\"mode\": \"earliest-offset\",\n" +
                     "\t\t\t\"codec\": \"json\",\n" +
                     "\t\t\t\"encoding\": \"UTF-8\",\n" +
@@ -272,7 +279,7 @@ public class KafkaTopic2PgTableTool {
 
             connection.setRequestProperty("Content-Type", "application/json;charset=utf-8");
 
-            connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString("".getBytes()));
+            connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString("yoda:Youda".getBytes()));
 
             //拼装参数
 
